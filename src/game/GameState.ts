@@ -19,7 +19,7 @@ export class GameStateManager {
     }
 
     this.result = null;
-    this.state = "playing";
+    this.changeState("playing");
   }
 
   public pause(): void {
@@ -27,7 +27,7 @@ export class GameStateManager {
       return;
     }
 
-    this.state = "paused";
+    this.changeState("paused");
   }
 
   public resume(): void {
@@ -35,7 +35,7 @@ export class GameStateManager {
       return;
     }
 
-    this.state = "playing";
+    this.changeState("playing");
   }
 
   public end(result: Exclude<GameResult, null>): void {
@@ -44,11 +44,16 @@ export class GameStateManager {
     }
 
     this.result = result;
-    this.state = "ended";
+    this.changeState("ended");
+  }
+
+  private changeState(newState: GameState): void {
+    console.log(`Game state changed from ${this.state} to ${newState}`);
+    this.state = newState;
   }
 
   public reset(): void {
     this.result = null;
-    this.state = "idle";
+    this.changeState("idle");
   }
 }

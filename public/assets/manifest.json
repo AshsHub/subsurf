@@ -1,0 +1,29 @@
+{
+  "bundles": [
+    {
+      "name": "fonts",
+      "assets": [
+        {
+          "alias": "Bungee-Regular",
+          "src": "/assets/fonts/Bungee-Regular.ttf"
+        }
+      ]
+    },
+    {
+      "name": "loading",
+      "assets": []
+    },
+    {
+      "name": "home",
+      "assets": []
+    },
+    {
+      "name": "game-core",
+      "assets": []
+    },
+    {
+      "name": "game-full",
+      "assets": []
+    }
+  ]
+}

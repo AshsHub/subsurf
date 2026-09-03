@@ -1,24 +1,33 @@
 import { Application, Renderer } from "pixi.js";
 import { Camera, Mesh3D } from "pixi3d/pixi7";
+import { GameStateManager } from "./GameState";
+import { AssetLoader } from "../loading/AssetLoader";
+import { BootFlow } from "../loading/BootFlow";
+import { OverlayManager } from "../ui/overlay/OverlayManager";
+import { UIRoot } from "../ui/UIRoot";
+import { HomeOverlay } from "../ui/overlay/HomeOverlay";
 
 export class GameApp {
   private app: Application | undefined;
+  private gameStateManager: GameStateManager = new GameStateManager();
+  private assetLoader: AssetLoader = new AssetLoader();
 
   async init(): Promise<void> {
     const app = new Application({
-      width: 960,
-      height: 540,
+      resizeTo: window,
       backgroundColor: 0xf9edf2,
       antialias: true,
       autoDensity: true,
       resolution: Math.min(window.devicePixelRatio || 1, 2),
     });
 
-    const canvas = app.view as HTMLCanvasElement;
+    await this.assetLoader.init();
 
+    const bootFlow = new BootFlow(app, this.assetLoader);
+    await bootFlow.run();
+
+    const canvas = app.view as HTMLCanvasElement;
     canvas.style.display = "block";
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
 
     const container = document.querySelector<HTMLDivElement>("#app");
 
@@ -30,7 +39,25 @@ export class GameApp {
 
     this.app = app;
 
+    const uiRoot = new UIRoot();
+
+    const overlayManager = new OverlayManager(this.app, uiRoot, {
+      home: () =>
+        new HomeOverlay({
+          onRequestClose: () => {
+            void overlayManager.goTo(null);
+            this.gameStateManager.start();
+          },
+        }),
+    });
+
+    await overlayManager.goTo("home", {
+      immediate: true,
+    });
+
     this.setupScene();
+
+    app.stage.addChild(uiRoot);
   }
 
   private setupScene(): void {

@@ -7,13 +7,17 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "combine": "node .combine/combine.js ./src .combine/combined.txt"
+    "combine": "node .combine/combine.js ./src .combine/combined.txt",
+    "assets:manifest": "tsx scripts/generate-asset-manifest.ts"
   },
   "devDependencies": {
+    "@types/node": "^26.4.1",
+    "tsx": "^4.23.13",
     "typescript": "~6.0.2",
     "vite": "^8.2.2"
   },
   "dependencies": {
+    "gsap": "^3.15.0",
     "pixi.js": "7.4.2",
     "pixi3d": "2.5.0"
   }
