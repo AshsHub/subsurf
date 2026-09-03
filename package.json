@@ -13,7 +13,7 @@
     "vite": "^8.2.2"
   },
   "dependencies": {
-    "pixi.js": "^8.20.1",
-    "pixi3d": "^2.5.0"
+    "pixi.js": "7.4.2",
+    "pixi3d": "2.5.0"
   }
 }
