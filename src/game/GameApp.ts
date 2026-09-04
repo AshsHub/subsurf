@@ -1,6 +1,6 @@
 import { Application, Renderer } from "pixi.js";
 import { Camera, CameraOrbitControl, Mesh3D } from "pixi3d/pixi7";
-import { GameStateManager } from "./GameState";
+import { GameStateManager, type GameStateChange } from "./GameState";
 import { AssetLoader } from "../loading/AssetLoader";
 import { BootFlow } from "../loading/BootFlow";
 import { OverlayManager } from "../ui/overlay/OverlayManager";
@@ -10,11 +10,19 @@ import { GameWorld } from "./world/GameWorld";
 import { KeyboardInput, type KeyboardAction } from "../input/KeyboardInput";
 
 export class GameApp {
-  private app: Application | undefined;
-  private gameStateManager: GameStateManager = new GameStateManager();
-  private assetLoader: AssetLoader = new AssetLoader();
-  private gameWorld: GameWorld = new GameWorld();
+  private _app: Application | undefined;
+  private _gameState: GameStateManager = new GameStateManager();
+  private _assetLoader: AssetLoader = new AssetLoader();
+  private _gameWorld: GameWorld;
   private readonly keyboard = new KeyboardInput();
+
+  constructor() {
+    this._gameWorld = new GameWorld(() => {
+      this._gameState.end("lost");
+    });
+
+    this._gameState.onChange(this._onGameStateChange);
+  }
 
   async init(): Promise<void> {
     const app = new Application({
@@ -26,14 +34,14 @@ export class GameApp {
     });
 
     app.ticker.add((deltaTime) => {
-      if (this.gameStateManager.getState() === "playing") {
-        this.gameWorld.update(deltaTime / 60);
+      if (this._gameState.state === "playing") {
+        this._gameWorld.update(deltaTime / 60);
       }
     });
 
-    await this.assetLoader.init();
+    await this._assetLoader.init();
 
-    const bootFlow = new BootFlow(app, this.assetLoader);
+    const bootFlow = new BootFlow(app, this._assetLoader);
     await bootFlow.run();
 
     const canvas = app.view as HTMLCanvasElement;
@@ -47,16 +55,16 @@ export class GameApp {
 
     container.appendChild(canvas);
 
-    this.app = app;
+    this._app = app;
 
     const uiRoot = new UIRoot();
 
-    const overlayManager = new OverlayManager(this.app, uiRoot, {
+    const overlayManager = new OverlayManager(this._app, uiRoot, {
       home: () =>
         new HomeOverlay({
           onRequestClose: () => {
             void overlayManager.goTo(null);
-            this.gameStateManager.start();
+            this._gameState.start();
           },
         }),
     });
@@ -73,28 +81,50 @@ export class GameApp {
   }
 
   private readonly onKeyboardAction = (action: KeyboardAction): void => {
-    if (this.gameStateManager.getState() !== "playing") {
+    if (this._gameState.state !== "playing") {
       return;
     }
 
-    this.gameWorld.onKeyboardAction(action);
+    this._gameWorld.onKeyboardAction(action);
   };
 
   private setupScene(): void {
-    if (!this.app) {
+    if (!this._app) {
       throw new Error("GameApp has not been initialised");
     }
 
-    this.gameWorld.init();
-    this.app.stage.addChild(this.gameWorld);
+    this._gameWorld.init();
+    this._app.stage.addChild(this._gameWorld);
 
-    let control = new CameraOrbitControl(this.app.view as HTMLCanvasElement);
+    let control = new CameraOrbitControl(this._app.view as HTMLCanvasElement);
     control.angles.x = 25;
   }
 
+  private readonly _onGameStateChange = ({
+    current,
+  }: GameStateChange): void => {
+    switch (current) {
+      case "playing":
+        this._gameWorld.start();
+        break;
+
+      case "paused":
+        // this._gameWorld.pause();
+        break;
+
+      case "ended":
+        this._gameWorld.gameOver();
+        break;
+
+      case "idle":
+        this._gameWorld.reset();
+        break;
+    }
+  };
+
   destroy(): void {
-    this.app?.destroy(true);
-    this.app = undefined;
+    this._app?.destroy(true);
+    this._app = undefined;
     this.keyboard.destroy();
   }
 }

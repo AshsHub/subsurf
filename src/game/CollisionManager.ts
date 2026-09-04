@@ -1,7 +1,14 @@
 import type { Collider } from "./world/component/Collider";
 
+export type CollisionHandler = (player: Collider, obstacle: Collider) => void;
+
 export class CollisionManager {
   private readonly _colliders = new Set<Collider>();
+  private readonly _onCollision?: CollisionHandler;
+
+  constructor(onCollision?: CollisionHandler) {
+    this._onCollision = onCollision;
+  }
 
   public add(collider: Collider): void {
     this._colliders.add(collider);
@@ -32,9 +39,17 @@ export class CollisionManager {
           continue;
         }
 
-        if (this._intersects(a, b)) {
-          this._handleCollision(a, b);
+        if (!this._intersects(a, b)) {
+          continue;
         }
+
+        if (a.layer === "player") {
+          this._onCollision?.(a, b);
+        } else {
+          this._onCollision?.(b, a);
+        }
+
+        return;
       }
     }
   }
@@ -47,15 +62,14 @@ export class CollisionManager {
   }
 
   private _intersects(a: Collider, b: Collider): boolean {
-    const x = a.minX < b.maxX && a.maxX > b.minX;
-    const y = a.minY < b.maxY && a.maxY > b.minY;
-    const z = a.minZ < b.maxZ && a.maxZ > b.minZ;
-
-    return x && y && z;
-  }
-
-  private _handleCollision(a: Collider, b: Collider): void {
-    console.log("Collision:", a.layer, b.layer);
+    return (
+      a.minX < b.maxX &&
+      a.maxX > b.minX &&
+      a.minY < b.maxY &&
+      a.maxY > b.minY &&
+      a.minZ < b.maxZ &&
+      a.maxZ > b.minZ
+    );
   }
 
   public clear(): void {

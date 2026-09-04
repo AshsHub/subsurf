@@ -7,12 +7,21 @@ import { Track } from "./entity/Track";
 import { Obstacle } from "./entity/Obstacle";
 import { type Lane } from "./configs/LaneConfig";
 import { GAME_SPEED } from "./configs/GameConfig";
-import { CollisionManager } from "../CollisionManager";
+import { CollisionManager, type CollisionHandler } from "../CollisionManager";
 import { CollisionDebugRenderer } from "../debug/CollisionDebugRenderer";
+import { SpawnManager } from "../SpawnManager";
+import { PATTERNS, SPAWN_CONFIG, type SpawnCell } from "./configs/SpawnConfig";
 
 export class GameWorld extends Container3D {
   private readonly _entityManager = new EntityManager();
-  private readonly _collisionManager = new CollisionManager();
+  private readonly _collisionManager: CollisionManager;
+  private readonly _spawnManager = new SpawnManager(
+    PATTERNS,
+    SPAWN_CONFIG,
+    (type, lane, z) => {
+      this._spawn(type, lane, z);
+    },
+  );
   private readonly _entityPool = new EntityPool();
 
   private readonly _activeObstacles = new Set<Obstacle>();
@@ -23,8 +32,10 @@ export class GameWorld extends Container3D {
 
   private readonly _collisionDebug: CollisionDebugRenderer;
 
-  constructor() {
+  constructor(onCollision?: CollisionHandler) {
     super();
+
+    this._collisionManager = new CollisionManager(onCollision);
     this._collisionDebug = new CollisionDebugRenderer(
       this,
       this._collisionManager,
@@ -46,11 +57,29 @@ export class GameWorld extends Container3D {
     this.setupLighting();
   }
 
+  public start(): void {
+    this._speed = GAME_SPEED.initial;
+    this._spawnManager.start();
+  }
+
+  public gameOver(): void {
+    this._spawnManager.stop();
+
+    // Stop/remove active gameplay entities if required.
+    // Don't destroy the world itself.
+  }
+
+  public reset(): void {
+    this._spawnManager.stop();
+    this._speed = GAME_SPEED.initial;
+    this._spawnManager.reset();
+  }
+
   public update(deltaTime: number): void {
-    // TODO: don't forget to undo
-    // this._updateSpeed(deltaTime);
+    this._updateSpeed(deltaTime);
 
     this._entityManager.update(deltaTime, this._speed);
+    this._spawnManager.update(deltaTime, this._speed);
     this._collisionManager.update();
 
     this._checkObstacles();
@@ -69,7 +98,6 @@ export class GameWorld extends Container3D {
 
       case "jump":
         this._player.jump();
-        this._spawnObstacle(-10);
         break;
     }
   };
@@ -79,6 +107,25 @@ export class GameWorld extends Container3D {
     this._entityPool.clear();
 
     super.destroy();
+  }
+
+  private _spawn(type: SpawnCell, lane: Lane, z: number): void {
+    const spawn = (lane: Lane, z: number) => {
+      const obstacle = this._entityPool.create<Obstacle>(Obstacle.poolId);
+      obstacle.spawn(lane, z);
+      this._activeObstacles.add(obstacle);
+      this._entityManager.add(obstacle);
+    };
+
+    switch (type) {
+      case "o":
+        spawn(lane, z);
+        break;
+
+      case "p":
+        // this._spawnPickup(lane, z);
+        break;
+    }
   }
 
   // TODO: Utilise to increase speed over time
@@ -91,19 +138,6 @@ export class GameWorld extends Container3D {
 
   private _registerPools(): void {
     this._entityPool.register(Obstacle.poolId, Obstacle.create, 5);
-  }
-
-  // TODO: Move to a proper spawning engine
-  private _spawnObstacle(z: number): void {
-    const obstacle = this._entityPool.create<Obstacle>(Obstacle.poolId);
-
-    const lane = Math.floor(Math.random() * 3) as Lane;
-
-    obstacle.spawn(lane, z);
-
-    this._activeObstacles.add(obstacle);
-
-    this._entityManager.add(obstacle);
   }
 
   private _checkObstacles(): void {

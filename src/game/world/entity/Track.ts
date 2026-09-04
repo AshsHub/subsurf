@@ -30,6 +30,8 @@ export class Track extends StaticEntity {
       material: this._material,
     });
 
+    this.visual.position.z = -45;
+
     this.visual.addChild(this.body);
   }
 

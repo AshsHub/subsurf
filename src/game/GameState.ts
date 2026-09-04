@@ -1,59 +1,86 @@
 export type GameState = "idle" | "playing" | "paused" | "ended";
 export type GameResult = "won" | "lost" | null;
 
-export class GameStateManager {
-  private state: GameState = "idle";
-  private result: GameResult = null;
+export interface GameStateChange {
+  previous: GameState;
+  current: GameState;
+  result: GameResult;
+}
 
-  public getState(): GameState {
-    return this.state;
+export class GameStateManager {
+  private _state: GameState = "idle";
+  private _result: GameResult = null;
+
+  private readonly _listeners = new Set<(change: GameStateChange) => void>();
+
+  public get state(): GameState {
+    return this._state;
   }
 
-  public getResult(): GameResult {
-    return this.result;
+  public get result(): GameResult {
+    return this._result;
+  }
+
+  public onChange(listener: (change: GameStateChange) => void): void {
+    this._listeners.add(listener);
   }
 
   public start(): void {
-    if (this.state !== "idle") {
+    if (this._state !== "idle") {
       return;
     }
 
-    this.result = null;
-    this.changeState("playing");
+    this._result = null;
+    this._changeState("playing");
   }
 
   public pause(): void {
-    if (this.state !== "playing") {
+    if (this._state !== "playing") {
       return;
     }
 
-    this.changeState("paused");
+    this._changeState("paused");
   }
 
   public resume(): void {
-    if (this.state !== "paused") {
+    if (this._state !== "paused") {
       return;
     }
 
-    this.changeState("playing");
+    this._changeState("playing");
   }
 
   public end(result: Exclude<GameResult, null>): void {
-    if (this.state !== "playing") {
+    if (this._state !== "playing" && this._state !== "paused") {
       return;
     }
 
-    this.result = result;
-    this.changeState("ended");
-  }
-
-  private changeState(newState: GameState): void {
-    console.log(`Game state changed from ${this.state} to ${newState}`);
-    this.state = newState;
+    this._result = result;
+    this._changeState("ended");
   }
 
   public reset(): void {
-    this.result = null;
-    this.changeState("idle");
+    this._result = null;
+    this._changeState("idle");
+  }
+
+  private _changeState(state: GameState): void {
+    const previous = this._state;
+
+    if (previous === state) {
+      return;
+    }
+
+    this._state = state;
+
+    const change = {
+      previous,
+      current: state,
+      result: this._result,
+    };
+
+    for (const listener of this._listeners) {
+      listener(change);
+    }
   }
 }
