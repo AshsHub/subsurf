@@ -88,7 +88,6 @@ export class Player extends DynamicEntity {
   public update(dt: number): void {
     this._updateLaneMovement(dt);
     this._updateJump(dt);
-    debugger;
   }
 
   private _updateLaneMovement(dt: number): void {
