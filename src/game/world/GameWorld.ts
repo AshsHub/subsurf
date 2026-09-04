@@ -1,20 +1,29 @@
 import { Container3D, Light, LightingEnvironment } from "pixi3d/pixi7";
+
 import { EntityManager } from "../EntityManager";
 import { EntityPool } from "../EntityPool";
 import { type KeyboardAction } from "../../input/KeyboardInput";
+
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
 import { Obstacle } from "./entity/Obstacle";
+
 import { type Lane } from "./configs/LaneConfig";
 import { GAME_SPEED } from "./configs/GameConfig";
+
 import { CollisionManager, type CollisionHandler } from "../CollisionManager";
+
 import { CollisionDebugRenderer } from "../debug/CollisionDebugRenderer";
+
 import { SpawnManager } from "../SpawnManager";
+
 import { PATTERNS, SPAWN_CONFIG, type SpawnCell } from "./configs/SpawnConfig";
 
 export class GameWorld extends Container3D {
   private readonly _entityManager = new EntityManager();
+
   private readonly _collisionManager: CollisionManager;
+
   private readonly _spawnManager = new SpawnManager(
     PATTERNS,
     SPAWN_CONFIG,
@@ -22,20 +31,23 @@ export class GameWorld extends Container3D {
       this._spawn(type, lane, z);
     },
   );
+
   private readonly _entityPool = new EntityPool();
 
   private readonly _activeObstacles = new Set<Obstacle>();
 
+  private readonly _collisionDebug: CollisionDebugRenderer;
+
   private _track!: Track;
   private _player!: Player;
-  private _speed = GAME_SPEED.initial;
 
-  private readonly _collisionDebug: CollisionDebugRenderer;
+  private _speed = GAME_SPEED.initial;
 
   constructor(onCollision?: CollisionHandler) {
     super();
 
     this._collisionManager = new CollisionManager(onCollision);
+
     this._collisionDebug = new CollisionDebugRenderer(
       this,
       this._collisionManager,
@@ -52,6 +64,7 @@ export class GameWorld extends Container3D {
     this._registerPools();
 
     this._track = this._entityManager.add(Track.create());
+
     this._player = this._entityManager.add(Player.create());
 
     this.setupLighting();
@@ -59,30 +72,49 @@ export class GameWorld extends Container3D {
 
   public start(): void {
     this._speed = GAME_SPEED.initial;
+
+    this._player.reset();
+
+    this._spawnManager.reset();
+    this._spawnManager.start();
+  }
+
+  public pause(): void {
+    this._spawnManager.stop();
+  }
+
+  public resume(): void {
     this._spawnManager.start();
   }
 
   public gameOver(): void {
     this._spawnManager.stop();
-
-    // Stop/remove active gameplay entities if required.
-    // Don't destroy the world itself.
   }
 
   public reset(): void {
     this._spawnManager.stop();
-    this._speed = GAME_SPEED.initial;
     this._spawnManager.reset();
+
+    this._speed = GAME_SPEED.initial;
+
+    this._player.reset();
+
+    for (const obstacle of [...this._activeObstacles]) {
+      this._despawnObstacle(obstacle);
+    }
   }
 
   public update(deltaTime: number): void {
     this._updateSpeed(deltaTime);
 
     this._entityManager.update(deltaTime, this._speed);
+
     this._spawnManager.update(deltaTime, this._speed);
+
     this._collisionManager.update();
 
     this._checkObstacles();
+
     this._collisionDebug.update();
   }
 
@@ -110,25 +142,29 @@ export class GameWorld extends Container3D {
   }
 
   private _spawn(type: SpawnCell, lane: Lane, z: number): void {
-    const spawn = (lane: Lane, z: number) => {
-      const obstacle = this._entityPool.create<Obstacle>(Obstacle.poolId);
-      obstacle.spawn(lane, z);
-      this._activeObstacles.add(obstacle);
-      this._entityManager.add(obstacle);
-    };
-
     switch (type) {
       case "o":
-        spawn(lane, z);
+        this._spawnObstacle(lane, z);
         break;
 
       case "p":
-        // this._spawnPickup(lane, z);
+        break;
+
+      case "x":
         break;
     }
   }
 
-  // TODO: Utilise to increase speed over time
+  private _spawnObstacle(lane: Lane, z: number): void {
+    const obstacle = this._entityPool.create<Obstacle>(Obstacle.poolId);
+
+    obstacle.spawn(lane, z);
+
+    this._activeObstacles.add(obstacle);
+
+    this._entityManager.add(obstacle);
+  }
+
   private _updateSpeed(deltaTime: number): void {
     this._speed = Math.min(
       this._speed + GAME_SPEED.acceleration * deltaTime,

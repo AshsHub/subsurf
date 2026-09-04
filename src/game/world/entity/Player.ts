@@ -1,5 +1,4 @@
 import { Mesh3D } from "pixi3d/pixi7";
-import gsap from "gsap";
 
 import { DynamicEntity } from "./base/DynamicEntity";
 import {
@@ -12,6 +11,7 @@ import { Mesh3DCustom } from "../mesh/CubeMesh";
 
 export class Player extends DynamicEntity {
   static readonly poolId = "player";
+
   readonly body: Mesh3D;
 
   private lane: Lane = STARTING_LANE;
@@ -19,7 +19,16 @@ export class Player extends DynamicEntity {
   private readonly groundY = 0;
 
   private airborne = false;
-  private jumpTween: gsap.core.Timeline | undefined;
+  private jumpTime = 0;
+
+  private readonly jumpHeight = 1.5;
+  private readonly jumpDuration = 0.65;
+
+  private laneStartX = 0;
+  private laneTargetX = 0;
+  private laneMoveTime = 0;
+  private laneMoveDuration = 0.2;
+  private laneMoving = false;
 
   static create(): Player {
     return new Player();
@@ -65,28 +74,7 @@ export class Player extends DynamicEntity {
     }
 
     this.airborne = true;
-
-    this.jumpTween?.kill();
-
-    this.jumpTween = gsap.timeline({
-      onComplete: () => {
-        this.airborne = false;
-        this.position.y = this.groundY;
-        this.jumpTween = undefined;
-      },
-    });
-
-    this.jumpTween
-      .to(this.position, {
-        y: 1.5,
-        duration: 0.3,
-        ease: "power2.out",
-      })
-      .to(this.position, {
-        y: this.groundY,
-        duration: 0.35,
-        ease: "power2.in",
-      });
+    this.jumpTime = 0;
   }
 
   get currentLane(): Lane {
@@ -97,26 +85,83 @@ export class Player extends DynamicEntity {
     return this.airborne;
   }
 
+  public update(dt: number): void {
+    this._updateLaneMovement(dt);
+    this._updateJump(dt);
+    debugger;
+  }
+
+  private _updateLaneMovement(dt: number): void {
+    if (!this.laneMoving) {
+      return;
+    }
+
+    this.laneMoveTime += dt;
+
+    const progress = Math.min(this.laneMoveTime / this.laneMoveDuration, 1);
+
+    const easedProgress = this._easeOut(progress);
+
+    this.position.x =
+      this.laneStartX + (this.laneTargetX - this.laneStartX) * easedProgress;
+
+    if (progress >= 1) {
+      this.position.x = this.laneTargetX;
+      this.laneMoving = false;
+    }
+  }
+
+  private _updateJump(dt: number): void {
+    if (!this.airborne) {
+      return;
+    }
+
+    this.jumpTime += dt;
+
+    const progress = Math.min(this.jumpTime / this.jumpDuration, 1);
+
+    // Sin gives a clean arc:
+    // 0 -> 1 -> 0
+    this.position.y =
+      this.groundY + Math.sin(progress * Math.PI) * this.jumpHeight;
+
+    if (progress >= 1) {
+      this.airborne = false;
+      this.jumpTime = 0;
+      this.position.y = this.groundY;
+    }
+  }
+
   private setLane(lane: Lane): void {
     this.lane = lane;
 
-    gsap.killTweensOf(this.position, "x");
+    this.laneStartX = this.position.x;
+    this.laneTargetX = LANE_POSITIONS[lane];
+    this.laneMoveTime = 0;
+    this.laneMoving = true;
+  }
 
-    gsap.to(this.position, {
-      x: LANE_POSITIONS[lane],
-      duration: 0.2,
-      ease: "power2.out",
-    });
+  public reset(): void {
+    this.lane = STARTING_LANE;
+
+    this.position.x = LANE_POSITIONS[STARTING_LANE];
+    this.position.y = this.groundY;
+
+    this.airborne = false;
+    this.jumpTime = 0;
+
+    this.laneStartX = this.position.x;
+    this.laneTargetX = this.position.x;
+    this.laneMoveTime = 0;
+    this.laneMoving = false;
   }
 
   override destroyEntity(): void {
-    this.jumpTween?.kill();
-    this.jumpTween = undefined;
-
-    gsap.killTweensOf(this.position);
-
+    this.reset();
     super.destroyEntity();
   }
 
-  public update(dt: number) {}
+  private _easeOut(t: number): number {
+    return 1 - Math.pow(1 - t, 2);
+  }
 }

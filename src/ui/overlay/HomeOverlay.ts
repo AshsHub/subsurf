@@ -4,7 +4,7 @@ import type { Overlay } from "./Overlay";
 import { TextButton } from "../TextButton";
 
 export interface HomeOverlayOptions {
-  onRequestClose: () => void;
+  onStart: () => void;
 }
 
 export class HomeOverlay extends Container implements Overlay {
@@ -29,7 +29,7 @@ export class HomeOverlay extends Container implements Overlay {
 
     this.startButton = new TextButton({
       text: "Start",
-      onClick: options.onRequestClose,
+      onClick: options.onStart,
       onPointerEnter: () => {
         this.logo.animation = "pop";
       },

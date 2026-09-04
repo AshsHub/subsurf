@@ -4,7 +4,7 @@ import type { Overlay } from "./Overlay";
 
 const TRANSITION_DURATION = 0.35;
 
-export type OverlayId = "home";
+export type OverlayId = "home" | "pause";
 
 export interface OverlayTransitionOptions {
   immediate?: boolean;

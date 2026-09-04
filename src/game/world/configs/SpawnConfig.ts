@@ -15,11 +15,11 @@ export interface SpawnConfig {
 }
 
 export const SPAWN_CONFIG: SpawnConfig = {
-  spawnZ: -40,
+  spawnZ: -20,
   // Distance between rows.
   rowSpacing: 3,
   // Seconds before the first pattern starts.
-  initialDelay: 5,
+  initialDelay: 2,
   // 25% chance to skip a completed pattern.
   skipChance: 0.25,
   // Never skip more than this many patterns consecutively.

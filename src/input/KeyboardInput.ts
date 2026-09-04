@@ -1,4 +1,4 @@
-export type KeyboardAction = "left" | "right" | "jump";
+export type KeyboardAction = "pause" | "left" | "right" | "jump";
 
 export class KeyboardInput {
   private readonly _listeners = new Set<(action: KeyboardAction) => void>();
@@ -37,6 +37,11 @@ export class KeyboardInput {
       case "Space":
       case "ArrowUp":
         action = "jump";
+        break;
+
+      case "Escape":
+      case "KeyP":
+        action = "pause";
         break;
     }
 
