@@ -3,6 +3,7 @@ import { AnimatedButton, type AnimatedButtonOptions } from "./AnimatedButton";
 
 export interface TextButtonOptions extends AnimatedButtonOptions {
   text: string;
+  fontFamily?: string;
   width?: number;
   height?: number;
 }
@@ -24,6 +25,7 @@ export class TextButton extends AnimatedButton {
 
     this.label = new Text(options.text, {
       fill: 0xffffff,
+      fontFamily: options.fontFamily ?? "Bungee Regular",
       fontSize: 24,
       fontWeight: "700",
     });

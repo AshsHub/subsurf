@@ -10,6 +10,7 @@ import { GameWorld } from "./world/GameWorld";
 import { KeyboardInput, type KeyboardAction } from "../input/KeyboardInput";
 import { PauseOverlay } from "../ui/overlay/PauseOverlay";
 import { GameUI } from "../ui/GameUI";
+import { PICKUP_CONFIG } from "./world/configs/GameConfig";
 
 export class GameApp {
   private _app: Application | undefined;
@@ -98,7 +99,7 @@ export class GameApp {
 
     this._gameUI = new GameUI(() => {
       this._gameState.pause();
-    });
+    }, PICKUP_CONFIG.pointTarget);
 
     this._gameUI.hide();
 

@@ -18,6 +18,7 @@ export class PauseOverlay extends Container {
 
     const title = new Text("PAUSED", {
       fill: 0xffffff,
+      fontFamily: "Bungee Regular",
       fontSize: 48,
       fontWeight: "700",
     });

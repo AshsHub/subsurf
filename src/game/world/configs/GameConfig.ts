@@ -10,6 +10,10 @@ export const GAME_SPEED: GameSpeedConfig = {
   acceleration: 0.5,
 };
 
+export const PICKUP_CONFIG = {
+  pointTarget: 20,
+};
+
 export const TRACK_CONFIG = {
   width: 8,
   length: 100,
