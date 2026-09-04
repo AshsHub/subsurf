@@ -19,7 +19,40 @@
     },
     {
       "name": "game-core",
-      "assets": []
+      "assets": [
+        {
+          "alias": "concrete-texture",
+          "src": "/assets/game-core/concrete-texture.jpg"
+        },
+        {
+          "alias": "back",
+          "src": "/assets/game-core/skybox/back.png"
+        },
+        {
+          "alias": "bottom",
+          "src": "/assets/game-core/skybox/bottom.png"
+        },
+        {
+          "alias": "cubemap",
+          "src": "/assets/game-core/skybox/cubemap.png"
+        },
+        {
+          "alias": "front",
+          "src": "/assets/game-core/skybox/front.png"
+        },
+        {
+          "alias": "left",
+          "src": "/assets/game-core/skybox/left.png"
+        },
+        {
+          "alias": "right",
+          "src": "/assets/game-core/skybox/right.png"
+        },
+        {
+          "alias": "top",
+          "src": "/assets/game-core/skybox/top.png"
+        }
+      ]
     },
     {
       "name": "game-full",

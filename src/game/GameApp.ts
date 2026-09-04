@@ -1,16 +1,18 @@
 import { Application, Renderer } from "pixi.js";
-import { Camera, Mesh3D } from "pixi3d/pixi7";
+import { Camera, CameraOrbitControl, Mesh3D } from "pixi3d/pixi7";
 import { GameStateManager } from "./GameState";
 import { AssetLoader } from "../loading/AssetLoader";
 import { BootFlow } from "../loading/BootFlow";
 import { OverlayManager } from "../ui/overlay/OverlayManager";
 import { UIRoot } from "../ui/UIRoot";
 import { HomeOverlay } from "../ui/overlay/HomeOverlay";
+import { GameWorld } from "../world/GameWorld";
 
 export class GameApp {
   private app: Application | undefined;
   private gameStateManager: GameStateManager = new GameStateManager();
   private assetLoader: AssetLoader = new AssetLoader();
+  private gameWorld: GameWorld = new GameWorld();
 
   async init(): Promise<void> {
     const app = new Application({
@@ -19,6 +21,10 @@ export class GameApp {
       antialias: true,
       autoDensity: true,
       resolution: Math.min(window.devicePixelRatio || 1, 2),
+    });
+
+    app.ticker.add((deltaTime) => {
+      this.gameWorld.update(deltaTime / 60);
     });
 
     await this.assetLoader.init();
@@ -65,17 +71,11 @@ export class GameApp {
       throw new Error("GameApp has not been initialised");
     }
 
-    const camera = new Camera(this.app.renderer as Renderer);
+    this.gameWorld.init();
+    this.app.stage.addChild(this.gameWorld);
 
-    camera.position.set(0, 0, 5);
-
-    this.app.stage.addChild(camera);
-
-    const cube = Mesh3D.createCube();
-
-    cube.position.set(0, 0, 0);
-
-    this.app.stage.addChild(cube);
+    let control = new CameraOrbitControl(this.app.view as HTMLCanvasElement);
+    control.angles.x = 25;
   }
 
   destroy(): void {
