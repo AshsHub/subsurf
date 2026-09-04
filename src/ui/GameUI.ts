@@ -14,12 +14,27 @@ export class GameUI extends Container {
       onClick: onPause,
     });
 
-    this.pauseButton.position.set(24, 24);
-
     this.addChild(this.pauseButton);
+
+    this.resize(window.innerWidth, window.innerHeight);
   }
 
-  resize(width: number, height: number): void {
-    // Reserved for future screen-relative UI.
+  public show(): void {
+    this.visible = true;
+    this.eventMode = "static";
+    this.pauseButton.setEnabled(true);
+  }
+
+  public hide(): void {
+    this.visible = false;
+    this.eventMode = "none";
+    this.pauseButton.setEnabled(false);
+  }
+
+  public resize(width: number, _height: number): void {
+    this.pauseButton.position.set(
+      width - this.pauseButton.width,
+      this.pauseButton.height,
+    );
   }
 }

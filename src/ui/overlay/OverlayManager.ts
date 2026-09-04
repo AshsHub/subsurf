@@ -20,7 +20,7 @@ export class OverlayManager {
   private currentOverlay: Overlay | undefined;
   private currentOverlayId: OverlayId | undefined;
 
-  private transition: Promise<void> = Promise.resolve();
+  private transitionVersion = 0;
 
   constructor(
     app: Application,
@@ -33,69 +33,88 @@ export class OverlayManager {
     this.factories = new Map(
       Object.entries(factories) as [OverlayId, OverlayFactory][],
     );
-
-    window.addEventListener("resize", this.handleResize);
   }
 
-  get current(): OverlayId | undefined {
+  public get current(): OverlayId | undefined {
     return this.currentOverlayId;
   }
 
-  async goTo(id: OverlayId | null, options: OverlayTransitionOptions = {}) {
-    this.transition = this.transition.then(() =>
-      this.performTransition(id, options),
-    );
-    return this.transition;
-  }
-
-  private async performTransition(
+  public goTo(
     id: OverlayId | null,
-    options: OverlayTransitionOptions,
-  ) {
+    options: OverlayTransitionOptions = {},
+  ): Promise<void> {
+    const version = ++this.transitionVersion;
+
     if (id === this.currentOverlayId) {
-      return;
+      if (this.currentOverlay) {
+        this._killAnimations(this.currentOverlay);
+
+        if (options.immediate) {
+          this.currentOverlay.alpha = 1;
+        } else {
+          gsap.to(this.currentOverlay, {
+            alpha: 1,
+            duration: TRANSITION_DURATION,
+            ease: "power2.out",
+            overwrite: true,
+          });
+        }
+      }
+
+      return Promise.resolve();
     }
 
     const previousOverlay = this.currentOverlay;
 
-    // Hide current overlay
-
     if (previousOverlay) {
+      this._killAnimations(previousOverlay);
+
       if (options.immediate) {
         previousOverlay.alpha = 0;
-      } else if (previousOverlay.animateOut) {
-        await previousOverlay.animateOut();
+
+        this._removeOverlay(previousOverlay);
       } else {
-        await gsap.to(previousOverlay, {
+        gsap.to(previousOverlay, {
           alpha: 0,
           duration: TRANSITION_DURATION,
           ease: "power2.inOut",
+          overwrite: true,
+          onComplete: () => {
+            if (version !== this.transitionVersion) {
+              return;
+            }
+
+            if (this.currentOverlay !== previousOverlay) {
+              return;
+            }
+
+            this._removeOverlay(previousOverlay);
+          },
         });
       }
-
-      await previousOverlay.onExit?.();
-
-      this.parent.removeChild(previousOverlay);
-      previousOverlay.destroy({
-        children: true,
-      });
-
-      this.currentOverlay = undefined;
-      this.currentOverlayId = undefined;
     }
-
-    // No replacement
 
     if (id === null) {
-      return;
+      /*
+       * Keep currentOverlay/currentOverlayId alive until the
+       * fade-out completes. This is important because a new
+       * pause request during the fade-out can reverse it.
+       */
+      return Promise.resolve();
     }
-
-    // Create new overlay
 
     const factory = this.factories.get(id);
 
     if (!factory) {
       throw new Error(`Unknown overlay: ${id}`);
+    }
+
+    /*
+     * If an old overlay is still fading out, remove it immediately
+     * before creating the replacement.
+     */
+    if (previousOverlay) {
+      this._removeOverlay(previousOverlay);
     }
 
     const overlay = factory();
@@ -109,37 +128,72 @@ export class OverlayManager {
 
     overlay.onResize?.(this.app.screen.width, this.app.screen.height);
 
-    await overlay.onEnter?.(this.app);
-
-    // Show new overlay
+    void overlay.onEnter?.(this.app);
 
     if (!options.immediate) {
-      if (overlay.animateIn) {
-        await overlay.animateIn();
-      } else {
-        await gsap.to(overlay, {
-          alpha: 1,
-          duration: TRANSITION_DURATION,
-          ease: "power2.out",
-        });
+      gsap.to(overlay, {
+        alpha: 1,
+        duration: TRANSITION_DURATION,
+        ease: "power2.out",
+        overwrite: true,
+      });
+    }
+
+    return Promise.resolve();
+  }
+
+  public handleResize(width: number, height: number): void {
+    this.currentOverlay?.onResize?.(width, height);
+  }
+
+  public destroy(): void {
+    ++this.transitionVersion;
+
+    if (this.currentOverlay) {
+      this._killAnimations(this.currentOverlay);
+      this._removeOverlay(this.currentOverlay);
+    }
+
+    this.currentOverlay = undefined;
+    this.currentOverlayId = undefined;
+  }
+
+  private _removeOverlay(overlay: Overlay): void {
+    this._killAnimations(overlay);
+
+    if (overlay.parent === this.parent) {
+      this.parent.removeChild(overlay);
+    }
+
+    if (this.currentOverlay === overlay) {
+      this.currentOverlay = undefined;
+      this.currentOverlayId = undefined;
+    }
+
+    overlay.destroy({
+      children: true,
+    });
+  }
+
+  private _killAnimations(object: Overlay): void {
+    gsap.killTweensOf(object);
+
+    for (const child of object.children) {
+      this._killAnimationsRecursive(child);
+    }
+  }
+
+  private _killAnimationsRecursive(
+    object: import("pixi.js").DisplayObject,
+  ): void {
+    gsap.killTweensOf(object);
+
+    if ("children" in object) {
+      const children = (object as import("pixi.js").Container).children;
+
+      for (const child of children) {
+        this._killAnimationsRecursive(child);
       }
     }
   }
-
-  destroy() {
-    window.removeEventListener("resize", this.handleResize);
-
-    gsap.killTweensOf(this.parent);
-
-    if (this.currentOverlay) {
-      gsap.killTweensOf(this.currentOverlay);
-    }
-  }
-
-  private readonly handleResize = () => {
-    this.currentOverlay?.onResize?.(
-      this.app.screen.width,
-      this.app.screen.height,
-    );
-  };
 }

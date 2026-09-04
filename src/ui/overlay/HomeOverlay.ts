@@ -42,19 +42,7 @@ export class HomeOverlay extends Container implements Overlay {
     this.addChild(this.logo);
 
     this.eventMode = "static";
-
-    this.on("pointermove", this.handlePointerMove);
   }
-
-  public onEnter(_app: Application): void | Promise<void> {}
-
-  public onExit() {
-    this.off("pointermove", this.handlePointerMove);
-  }
-
-  private readonly handlePointerMove = (event: FederatedPointerEvent) => {
-    const point = this.toLocal(event.global);
-  };
 
   onResize(width: number, height: number) {
     this.startButton.position.set(width * 0.5, height * 0.7);
