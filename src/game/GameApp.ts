@@ -78,7 +78,7 @@ export class GameApp {
     this._overlayManager = new OverlayManager(this._app, uiRoot, {
       home: () =>
         new HomeOverlay({
-          onStart: () => {
+          onRequestStart: () => {
             this._gameState.start();
           },
         }),

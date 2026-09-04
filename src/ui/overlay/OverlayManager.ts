@@ -39,82 +39,56 @@ export class OverlayManager {
     return this.currentOverlayId;
   }
 
-  public goTo(
+  public async goTo(
     id: OverlayId | null,
     options: OverlayTransitionOptions = {},
   ): Promise<void> {
     const version = ++this.transitionVersion;
 
-    if (id === this.currentOverlayId) {
-      if (this.currentOverlay) {
-        this._killAnimations(this.currentOverlay);
+    const previousOverlay = this.currentOverlay;
+    const previousOverlayId = this.currentOverlayId;
 
-        if (options.immediate) {
-          this.currentOverlay.alpha = 1;
-        } else {
-          gsap.to(this.currentOverlay, {
-            alpha: 1,
-            duration: TRANSITION_DURATION,
-            ease: "power2.out",
-            overwrite: true,
-          });
-        }
-      }
-
-      return Promise.resolve();
+    if (id === previousOverlayId) {
+      return;
     }
 
-    const previousOverlay = this.currentOverlay;
-
     if (previousOverlay) {
-      this._killAnimations(previousOverlay);
+      this._stopTransitionAnimation(previousOverlay);
 
       if (options.immediate) {
         previousOverlay.alpha = 0;
-
-        this._removeOverlay(previousOverlay);
+      } else if (previousOverlay.animateOut) {
+        await previousOverlay.animateOut();
       } else {
-        gsap.to(previousOverlay, {
+        await gsap.to(previousOverlay, {
           alpha: 0,
           duration: TRANSITION_DURATION,
           ease: "power2.inOut",
           overwrite: true,
-          onComplete: () => {
-            if (version !== this.transitionVersion) {
-              return;
-            }
-
-            if (this.currentOverlay !== previousOverlay) {
-              return;
-            }
-
-            this._removeOverlay(previousOverlay);
-          },
         });
       }
+
+      if (version !== this.transitionVersion) {
+        return;
+      }
+
+      await previousOverlay.onExit?.();
+
+      if (version !== this.transitionVersion) {
+        return;
+      }
+
+      this._removeOverlay(previousOverlay);
     }
 
     if (id === null) {
-      /*
-       * Keep currentOverlay/currentOverlayId alive until the
-       * fade-out completes. This is important because a new
-       * pause request during the fade-out can reverse it.
-       */
-      return Promise.resolve();
+      return;
     }
 
     const factory = this.factories.get(id);
 
     if (!factory) {
       throw new Error(`Unknown overlay: ${id}`);
-    }
-
-    /*
-     * If an old overlay is still fading out, remove it immediately
-     * before creating the replacement.
-     */
-    if (previousOverlay) {
-      this._removeOverlay(previousOverlay);
     }
 
     const overlay = factory();
@@ -128,18 +102,28 @@ export class OverlayManager {
 
     overlay.onResize?.(this.app.screen.width, this.app.screen.height);
 
-    void overlay.onEnter?.(this.app);
+    await overlay.onEnter?.(this.app);
 
-    if (!options.immediate) {
-      gsap.to(overlay, {
+    if (version !== this.transitionVersion) {
+      this._removeOverlay(overlay);
+      return;
+    }
+
+    if (options.immediate) {
+      overlay.alpha = 1;
+      return;
+    }
+
+    if (overlay.animateIn) {
+      await overlay.animateIn();
+    } else {
+      await gsap.to(overlay, {
         alpha: 1,
         duration: TRANSITION_DURATION,
         ease: "power2.out",
         overwrite: true,
       });
     }
-
-    return Promise.resolve();
   }
 
   public handleResize(width: number, height: number): void {
@@ -150,7 +134,7 @@ export class OverlayManager {
     ++this.transitionVersion;
 
     if (this.currentOverlay) {
-      this._killAnimations(this.currentOverlay);
+      this._stopTransitionAnimation(this.currentOverlay);
       this._removeOverlay(this.currentOverlay);
     }
 
@@ -158,9 +142,25 @@ export class OverlayManager {
     this.currentOverlayId = undefined;
   }
 
-  private _removeOverlay(overlay: Overlay): void {
-    this._killAnimations(overlay);
+  private _stopTransitionAnimation(overlay: Overlay): void {
+    gsap.killTweensOf(overlay);
 
+    if ("children" in overlay) {
+      this._killChildAnimations(overlay as Container);
+    }
+  }
+
+  private _killChildAnimations(container: Container): void {
+    for (const child of container.children) {
+      gsap.killTweensOf(child);
+
+      if ("children" in child) {
+        this._killChildAnimations(child as Container);
+      }
+    }
+  }
+
+  private _removeOverlay(overlay: Overlay): void {
     if (overlay.parent === this.parent) {
       this.parent.removeChild(overlay);
     }
@@ -173,27 +173,5 @@ export class OverlayManager {
     overlay.destroy({
       children: true,
     });
-  }
-
-  private _killAnimations(object: Overlay): void {
-    gsap.killTweensOf(object);
-
-    for (const child of object.children) {
-      this._killAnimationsRecursive(child);
-    }
-  }
-
-  private _killAnimationsRecursive(
-    object: import("pixi.js").DisplayObject,
-  ): void {
-    gsap.killTweensOf(object);
-
-    if ("children" in object) {
-      const children = (object as import("pixi.js").Container).children;
-
-      for (const child of children) {
-        this._killAnimationsRecursive(child);
-      }
-    }
   }
 }
