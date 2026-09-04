@@ -21,9 +21,9 @@ export class Track extends StaticEntity {
     this._material = new TrackMaterial(texture);
 
     const geometry = new PlaneGeometry({
-      width: 16,
+      width: 8,
       length: 100,
-      uvRepeatX: 1,
+      uvRepeatX: 0.5,
       uvRepeatY: 4,
     });
 

@@ -7,12 +7,14 @@ import { OverlayManager } from "../ui/overlay/OverlayManager";
 import { UIRoot } from "../ui/UIRoot";
 import { HomeOverlay } from "../ui/overlay/HomeOverlay";
 import { GameWorld } from "../world/GameWorld";
+import { KeyboardInput, type KeyboardAction } from "../input/KeyboardInput";
 
 export class GameApp {
   private app: Application | undefined;
   private gameStateManager: GameStateManager = new GameStateManager();
   private assetLoader: AssetLoader = new AssetLoader();
   private gameWorld: GameWorld = new GameWorld();
+  private readonly keyboard = new KeyboardInput();
 
   async init(): Promise<void> {
     const app = new Application({
@@ -24,7 +26,9 @@ export class GameApp {
     });
 
     app.ticker.add((deltaTime) => {
-      this.gameWorld.update(deltaTime / 60);
+      if (this.gameStateManager.getState() === "playing") {
+        this.gameWorld.update(deltaTime / 60);
+      }
     });
 
     await this.assetLoader.init();
@@ -64,7 +68,17 @@ export class GameApp {
     this.setupScene();
 
     app.stage.addChild(uiRoot);
+
+    this.keyboard.onAction(this.onKeyboardAction);
   }
+
+  private readonly onKeyboardAction = (action: KeyboardAction): void => {
+    if (this.gameStateManager.getState() !== "playing") {
+      return;
+    }
+
+    this.gameWorld.onKeyboardAction(action);
+  };
 
   private setupScene(): void {
     if (!this.app) {
@@ -81,5 +95,6 @@ export class GameApp {
   destroy(): void {
     this.app?.destroy(true);
     this.app = undefined;
+    this.keyboard.destroy();
   }
 }

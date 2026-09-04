@@ -33,19 +33,19 @@ export abstract class WorldEntity extends Container3D {
   /**
    * Called once when the entity is added to an EntityManager.
    */
-  onAdded(): void {}
+  public onAdded(): void {}
 
   /**
    * Called every frame while the entity is active.
    */
-  update(_deltaTime: number): void {}
+  public update(_deltaTime: number): void {}
 
   /**
    * Called before the entity is removed.
    */
-  onRemoved(): void {}
+  public onRemoved(): void {}
 
-  destroyEntity(): void {
+  public destroyEntity(): void {
     if (this._entityDestroyed) {
       return;
     }
