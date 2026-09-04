@@ -21,8 +21,8 @@
       "name": "game-core",
       "assets": [
         {
-          "alias": "concrete-texture",
-          "src": "/assets/game-core/concrete-texture.jpg"
+          "alias": "road-texture",
+          "src": "/assets/game-core/road-texture.png"
         },
         {
           "alias": "back",

@@ -16,14 +16,14 @@ export class Track extends StaticEntity {
   constructor() {
     super();
 
-    const texture = Assets.get("concrete-texture");
+    const texture = Assets.get("road-texture");
     texture.baseTexture.wrapMode = WRAP_MODES.REPEAT;
     this._material = new TrackMaterial(texture);
 
     const geometry = new PlaneGeometry({
       width: 8,
       length: 100,
-      uvRepeatX: 0.5,
+      uvRepeatX: 1,
       uvRepeatY: 4,
     });
 
