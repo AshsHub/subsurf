@@ -3,12 +3,12 @@ import { Camera, Material, MeshShader } from "pixi3d/pixi7";
 
 import trackVert from "./trackVert.glsl?raw";
 import trackFrag from "./trackFrag.glsl?raw";
+import { TRACK_CONFIG } from "../../../world/configs/GameConfig";
 
 export class TrackMaterial extends Material {
   private readonly texture: any;
 
   private _scrollOffset = 0;
-  private _scrollSpeed = 0.1;
   private _direction = -1;
 
   constructor(texture: any) {
@@ -31,12 +31,9 @@ export class TrackMaterial extends Material {
     shader.uniforms.u_ViewProjection = Camera.main.viewProjection.array;
   }
 
-  scroll(dt: number): void {
-    this._scrollOffset += this._scrollSpeed * (dt * this._direction);
-  }
-
-  setScrollSpeed(speed: number): void {
-    this._scrollSpeed = speed;
+  scroll(dt: number, speed: number): void {
+    const uvSpeed = speed * (TRACK_CONFIG.uvRepeatY / TRACK_CONFIG.length);
+    this._scrollOffset += uvSpeed * (dt * this._direction);
   }
 
   resetScroll(): void {

@@ -1,10 +1,15 @@
 import { Mesh3D } from "pixi3d/pixi7";
 import gsap from "gsap";
 
-import { DynamicEntity } from "./entity/DynamicEntity";
-import { LANE_POSITIONS, STARTING_LANE, type Lane } from "./LaneConfig";
+import { DynamicEntity } from "./base/DynamicEntity";
+import {
+  LANE_POSITIONS,
+  STARTING_LANE,
+  type Lane,
+} from "../configs/LaneConfig";
 
 export class Player extends DynamicEntity {
+  static readonly poolId = "player";
   readonly body: Mesh3D;
   readonly head: Mesh3D;
 
@@ -32,7 +37,12 @@ export class Player extends DynamicEntity {
 
     this.visual.addChild(this.body, this.head);
 
-    this.position.set(LANE_POSITIONS[this.lane], this.groundY, 0);
+    this.setCollider({
+      width: 0.7,
+      height: 1.85,
+      depth: 0.5,
+      layer: "player",
+    });
   }
 
   moveLeft(): void {

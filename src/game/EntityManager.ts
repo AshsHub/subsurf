@@ -1,20 +1,31 @@
-import { Container3D } from "pixi3d/pixi7";
-import type { WorldEntity } from "../world/entity/WorldEntity";
+import type { CollisionComponent } from "../world/component/CollisionComponent";
+import type { WorldEntity } from "../world/entity/base/WorldEntity";
+import type { GameWorld } from "../world/GameWorld";
 
-export class EntityManager extends Container3D {
-  private readonly entities = new Set<WorldEntity>();
+export class EntityManager {
+  private readonly _entities = new Set<WorldEntity>();
+  private readonly _colliders = new Set<CollisionComponent>();
+  private _gameWorld!: GameWorld;
 
-  add<T extends WorldEntity>(entity: T): T {
+  public init(world: GameWorld): void {
+    this._gameWorld = world;
+  }
+
+  public add<T extends WorldEntity>(entity: T): T {
     if (entity.destroyed) {
       throw new Error("Cannot add a destroyed entity");
     }
 
-    if (this.entities.has(entity)) {
+    if (this._entities.has(entity)) {
       return entity;
     }
 
-    this.entities.add(entity);
-    this.addChild(entity);
+    this._entities.add(entity);
+    this._gameWorld.addChild(entity);
+
+    if (entity.collider) {
+      this._colliders.add(entity.collider);
+    }
 
     entity.onAdded();
 
@@ -22,43 +33,92 @@ export class EntityManager extends Container3D {
   }
 
   remove(entity: WorldEntity): void {
-    if (!this.entities.has(entity)) {
+    if (!this._entities.has(entity)) {
       return;
     }
 
-    this.entities.delete(entity);
+    this._entities.delete(entity);
 
-    if (entity.parent === this) {
-      this.removeChild(entity);
+    if (entity.collider) {
+      this._colliders.delete(entity.collider);
     }
 
+    if (entity.parent === this._gameWorld) {
+      this._gameWorld.removeChild(entity);
+    }
+  }
+
+  public destroy(entity: WorldEntity): void {
+    if (!this._entities.has(entity)) {
+      return;
+    }
+
+    this.remove(entity);
     entity.destroyEntity();
   }
 
-  update(deltaTime: number): void {
-    for (const entity of this.entities) {
+  update(deltaTime: number, speed: number): void {
+    for (const entity of this._entities) {
       if (entity.destroyed || !entity.shouldUpdate) {
         continue;
       }
 
-      entity.update(deltaTime);
+      entity.update(deltaTime, speed);
+    }
+
+    this.checkCollisions();
+  }
+
+  public checkCollisions(): void {
+    const colliders = [...this._colliders];
+
+    for (let i = 0; i < colliders.length; i++) {
+      const a = colliders[i];
+
+      if (!a.enabled) {
+        continue;
+      }
+
+      for (let j = i + 1; j < colliders.length; j++) {
+        const b = colliders[j];
+
+        if (!b.enabled || !a.canCollide(b)) {
+          continue;
+        }
+
+        if (a.intersects(b)) {
+          console.log("Collision");
+        }
+      }
     }
   }
 
-  clear(): void {
-    for (const entity of this.entities) {
+  public forEach(callback: (entity: WorldEntity) => void): void {
+    for (const entity of this._entities) {
+      callback(entity);
+    }
+  }
+
+  public getEntities(): readonly WorldEntity[] {
+    return [...this._entities];
+  }
+
+  public clear(): void {
+    for (const entity of this._entities) {
       entity.destroyEntity();
     }
 
-    this.entities.clear();
-    this.removeChildren();
+    this._entities.clear();
+    this._colliders.clear();
+
+    this._gameWorld.removeChildren();
   }
 
-  has(entity: WorldEntity): boolean {
-    return this.entities.has(entity);
+  public has(entity: WorldEntity): boolean {
+    return this._entities.has(entity);
   }
 
-  get size(): number {
-    return this.entities.size;
+  public get size(): number {
+    return this._entities.size;
   }
 }
