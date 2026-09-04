@@ -3,7 +3,7 @@ import { Mesh3D } from "pixi3d/pixi7";
 
 import { TrackMaterial } from "../../../rendering/materials/track/TrackMaterial";
 import { TRACK_CONFIG } from "../configs/GameConfig";
-import { Mesh3DCustom } from "../mesh/CubeMesh";
+import { Mesh3DCustom } from "../mesh/Mesh3DCustom";
 import { StaticEntity } from "./base/StaticEntity";
 
 export class Track extends StaticEntity {

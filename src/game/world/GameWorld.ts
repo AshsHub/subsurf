@@ -1,4 +1,10 @@
-import { Container3D, Light, LightingEnvironment } from "pixi3d/pixi7";
+import {
+  Container3D,
+  Cubemap,
+  Light,
+  LightingEnvironment,
+  Skybox,
+} from "pixi3d/pixi7";
 
 import { EntityManager } from "../EntityManager";
 import { EntityPool } from "../EntityPool";
@@ -18,6 +24,7 @@ import { CollisionDebugRenderer } from "../debug/CollisionDebugRenderer";
 import { SpawnManager } from "../SpawnManager";
 
 import { PATTERNS, SPAWN_CONFIG, type SpawnCell } from "./configs/SpawnConfig";
+import { Assets } from "pixi.js";
 
 export class GameWorld extends Container3D {
   private readonly _entityManager = new EntityManager();
@@ -58,7 +65,7 @@ export class GameWorld extends Container3D {
     return this._speed;
   }
 
-  public init(): void {
+  public async init(): Promise<void> {
     this._entityManager.init(this, this._collisionManager);
 
     this._registerPools();
@@ -66,8 +73,22 @@ export class GameWorld extends Container3D {
     this._track = this._entityManager.add(Track.create());
 
     this._player = this._entityManager.add(Player.create());
+    await this.setupSkybox();
 
     this.setupLighting();
+  }
+
+  private async setupSkybox(): Promise<void> {
+    const cubemap = Cubemap.fromFaces({
+      posx: Assets.get("right"),
+      negx: Assets.get("left"),
+      posy: Assets.get("top"),
+      negy: Assets.get("bottom"),
+      posz: Assets.get("front"),
+      negz: Assets.get("back"),
+    });
+
+    this.addChild(new Skybox(cubemap));
   }
 
   public start(): void {

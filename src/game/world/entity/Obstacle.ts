@@ -2,7 +2,7 @@ import { Mesh3D } from "pixi3d/pixi7";
 import { DynamicEntity } from "./base/DynamicEntity";
 import { LANE_POSITIONS, type Lane } from "../configs/LaneConfig";
 import { OBSTACLE_CONFIG } from "../configs/GameConfig";
-import { Mesh3DCustom } from "../mesh/CubeMesh";
+import { Mesh3DCustom } from "../mesh/Mesh3DCustom";
 
 export class Obstacle extends DynamicEntity {
   static readonly poolId = "obstacle";

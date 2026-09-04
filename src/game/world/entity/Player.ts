@@ -7,7 +7,7 @@ import {
   type Lane,
 } from "../configs/LaneConfig";
 import { PLAYER_CONFIG } from "../configs/GameConfig";
-import { Mesh3DCustom } from "../mesh/CubeMesh";
+import { Mesh3DCustom } from "../mesh/Mesh3DCustom";
 
 export class Player extends DynamicEntity {
   static readonly poolId = "player";

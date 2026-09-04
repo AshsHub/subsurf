@@ -1,9 +1,9 @@
-import { Container3D, Material, Mesh3D } from "pixi3d/pixi7";
+import { Material, Mesh3D } from "pixi3d/pixi7";
+import { ColliderDebugMaterial } from "../../rendering/materials/collisionDebug/ColliderDebugMaterial";
 import type { CollisionManager } from "../CollisionManager";
 import type { Collider, CollisionLayer } from "../world/component/Collider";
-import { ColliderDebugMaterial } from "../../rendering/materials/collisionDebug/ColliderDebugMaterial";
 import type { GameWorld } from "../world/GameWorld";
-import { Mesh3DCustom } from "../world/mesh/CubeMesh";
+import { Mesh3DCustom } from "../world/mesh/Mesh3DCustom";
 
 export class CollisionDebugRenderer {
   private readonly _collisionManager: CollisionManager;
