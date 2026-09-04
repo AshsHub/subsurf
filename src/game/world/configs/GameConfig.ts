@@ -16,3 +16,19 @@ export const TRACK_CONFIG = {
   uvRepeatX: 1,
   uvRepeatY: 5,
 };
+
+export const OBSTACLE_CONFIG = {
+  body: {
+    width: 1,
+    height: 1,
+    depth: 1,
+  },
+};
+
+export const PLAYER_CONFIG = {
+  body: {
+    width: 1,
+    height: 1,
+    depth: 1,
+  },
+};

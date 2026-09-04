@@ -3,7 +3,7 @@ import { Camera, Material, MeshShader } from "pixi3d/pixi7";
 
 import trackVert from "./trackVert.glsl?raw";
 import trackFrag from "./trackFrag.glsl?raw";
-import { TRACK_CONFIG } from "../../../world/configs/GameConfig";
+import { TRACK_CONFIG } from "../../../game/world/configs/GameConfig";
 
 export class TrackMaterial extends Material {
   private readonly texture: any;

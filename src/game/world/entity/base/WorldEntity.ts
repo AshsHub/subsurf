@@ -1,15 +1,12 @@
 import { Container3D } from "pixi3d/pixi7";
-import {
-  CollisionComponent,
-  type CollisionComponentOptions,
-} from "../../component/CollisionComponent";
+import { Collider, type ColliderOptions } from "../../component/Collider";
 
 export abstract class WorldEntity extends Container3D {
   protected _shouldUpdate = false;
   private _entityDestroyed = false;
   private _active = true;
   readonly visual: Container3D;
-  private _collider?: CollisionComponent;
+  private _collider?: Collider;
 
   constructor() {
     super();
@@ -56,12 +53,12 @@ export abstract class WorldEntity extends Container3D {
    */
   public onRemoved(): void {}
 
-  public get collider(): CollisionComponent | undefined {
+  public get collider(): Collider | undefined {
     return this._collider;
   }
 
-  public setCollider(options: CollisionComponentOptions): CollisionComponent {
-    this._collider = new CollisionComponent(this, options);
+  public setCollider(options: ColliderOptions): Collider {
+    this._collider = new Collider(this, options);
 
     return this._collider;
   }

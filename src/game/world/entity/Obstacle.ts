@@ -1,6 +1,8 @@
 import { Mesh3D } from "pixi3d/pixi7";
 import { DynamicEntity } from "./base/DynamicEntity";
 import { LANE_POSITIONS, type Lane } from "../configs/LaneConfig";
+import { OBSTACLE_CONFIG } from "../configs/GameConfig";
+import { Mesh3DCustom } from "../mesh/CubeMesh";
 
 export class Obstacle extends DynamicEntity {
   static readonly poolId = "obstacle";
@@ -13,15 +15,21 @@ export class Obstacle extends DynamicEntity {
   constructor() {
     super();
 
-    this.body = Mesh3D.createCube();
-    this.body.scale.set(1, 0.75, 0.5);
+    const { width, height, depth } = OBSTACLE_CONFIG.body;
+
+    this.body = Mesh3DCustom.createCube();
+
+    this.body.scale.set(width, height, depth);
+    this.body.position.y = height / 2;
+
     this.visual.addChild(this.body);
 
     this.setCollider({
-      width: 1.2,
-      height: 1,
-      depth: 1.2,
+      width: width * 0.8,
+      height: height * 0.8,
+      depth: depth * 0.8,
       layer: "obstacle",
+      offsetY: height / 2,
     });
   }
 

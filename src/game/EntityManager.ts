@@ -1,14 +1,15 @@
-import type { CollisionComponent } from "./world/component/CollisionComponent";
+import type { CollisionManager } from "./CollisionManager";
 import type { WorldEntity } from "./world/entity/base/WorldEntity";
 import type { GameWorld } from "./world/GameWorld";
 
 export class EntityManager {
   private readonly _entities = new Set<WorldEntity>();
-  private readonly _colliders = new Set<CollisionComponent>();
+  private _collisionManager!: CollisionManager;
   private _gameWorld!: GameWorld;
 
-  public init(world: GameWorld): void {
+  public init(world: GameWorld, collisionManager: CollisionManager): void {
     this._gameWorld = world;
+    this._collisionManager = collisionManager;
   }
 
   public add<T extends WorldEntity>(entity: T): T {
@@ -24,7 +25,7 @@ export class EntityManager {
     this._gameWorld.addChild(entity);
 
     if (entity.collider) {
-      this._colliders.add(entity.collider);
+      this._collisionManager.add(entity.collider);
     }
 
     entity.onAdded();
@@ -32,7 +33,7 @@ export class EntityManager {
     return entity;
   }
 
-  remove(entity: WorldEntity): void {
+  public remove(entity: WorldEntity): void {
     if (!this._entities.has(entity)) {
       return;
     }
@@ -40,7 +41,7 @@ export class EntityManager {
     this._entities.delete(entity);
 
     if (entity.collider) {
-      this._colliders.delete(entity.collider);
+      this._collisionManager.remove(entity.collider);
     }
 
     if (entity.parent === this._gameWorld) {
@@ -57,39 +58,13 @@ export class EntityManager {
     entity.destroyEntity();
   }
 
-  update(deltaTime: number, speed: number): void {
+  public update(deltaTime: number, speed: number): void {
     for (const entity of this._entities) {
       if (entity.destroyed || !entity.shouldUpdate) {
         continue;
       }
 
       entity.update(deltaTime, speed);
-    }
-
-    this.checkCollisions();
-  }
-
-  public checkCollisions(): void {
-    const colliders = [...this._colliders];
-
-    for (let i = 0; i < colliders.length; i++) {
-      const a = colliders[i];
-
-      if (!a.enabled) {
-        continue;
-      }
-
-      for (let j = i + 1; j < colliders.length; j++) {
-        const b = colliders[j];
-
-        if (!b.enabled || !a.canCollide(b)) {
-          continue;
-        }
-
-        if (a.intersects(b)) {
-          console.log("Collision");
-        }
-      }
     }
   }
 
@@ -109,8 +84,6 @@ export class EntityManager {
     }
 
     this._entities.clear();
-    this._colliders.clear();
-
     this._gameWorld.removeChildren();
   }
 

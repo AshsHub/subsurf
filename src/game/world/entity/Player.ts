@@ -7,11 +7,12 @@ import {
   STARTING_LANE,
   type Lane,
 } from "../configs/LaneConfig";
+import { PLAYER_CONFIG } from "../configs/GameConfig";
+import { Mesh3DCustom } from "../mesh/CubeMesh";
 
 export class Player extends DynamicEntity {
   static readonly poolId = "player";
   readonly body: Mesh3D;
-  readonly head: Mesh3D;
 
   private lane: Lane = STARTING_LANE;
 
@@ -27,21 +28,18 @@ export class Player extends DynamicEntity {
   constructor() {
     super();
 
-    this.body = Mesh3D.createCube();
-    this.body.scale.set(0.7, 1, 0.5);
-    this.body.position.set(0, 0.6, 0);
+    const { body } = PLAYER_CONFIG;
 
-    this.head = Mesh3D.createCube();
-    this.head.scale.set(0.5, 0.5, 0.5);
-    this.head.position.set(0, 1.35, 0);
+    this.body = Mesh3DCustom.createCube();
+    this.body.scale.set(body.width, body.height, body.depth);
+    this.body.position.set(0, body.height / 2, 0);
 
-    this.visual.addChild(this.body, this.head);
+    this.visual.addChild(this.body);
 
     this.setCollider({
-      width: 0.7,
-      height: 1.85,
-      depth: 0.5,
+      ...body,
       layer: "player",
+      offsetY: body.height / 2,
     });
   }
 

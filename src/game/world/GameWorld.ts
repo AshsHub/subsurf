@@ -7,9 +7,12 @@ import { Track } from "./entity/Track";
 import { Obstacle } from "./entity/Obstacle";
 import { type Lane } from "./configs/LaneConfig";
 import { GAME_SPEED } from "./configs/GameConfig";
+import { CollisionManager } from "../CollisionManager";
+import { CollisionDebugRenderer } from "../debug/CollisionDebugRenderer";
 
 export class GameWorld extends Container3D {
   private readonly _entityManager = new EntityManager();
+  private readonly _collisionManager = new CollisionManager();
   private readonly _entityPool = new EntityPool();
 
   private readonly _activeObstacles = new Set<Obstacle>();
@@ -18,12 +21,22 @@ export class GameWorld extends Container3D {
   private _player!: Player;
   private _speed = GAME_SPEED.initial;
 
+  private readonly _collisionDebug: CollisionDebugRenderer;
+
+  constructor() {
+    super();
+    this._collisionDebug = new CollisionDebugRenderer(
+      this,
+      this._collisionManager,
+    );
+  }
+
   public get speed(): number {
     return this._speed;
   }
 
   public init(): void {
-    this._entityManager.init(this);
+    this._entityManager.init(this, this._collisionManager);
 
     this._registerPools();
 
@@ -34,8 +47,14 @@ export class GameWorld extends Container3D {
   }
 
   public update(deltaTime: number): void {
-    this._entityManager.update(deltaTime, this.speed);
+    // TODO: don't forget to undo
+    // this._updateSpeed(deltaTime);
+
+    this._entityManager.update(deltaTime, this._speed);
+    this._collisionManager.update();
+
     this._checkObstacles();
+    this._collisionDebug.update();
   }
 
   public readonly onKeyboardAction = (action: KeyboardAction): void => {
