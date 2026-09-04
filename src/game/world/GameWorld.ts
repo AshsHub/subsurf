@@ -1,7 +1,7 @@
 import { Container3D, Light, LightingEnvironment } from "pixi3d/pixi7";
-import { EntityManager } from "../game/EntityManager";
-import { EntityPool } from "../game/EntityPool";
-import { type KeyboardAction } from "../input/KeyboardInput";
+import { EntityManager } from "../EntityManager";
+import { EntityPool } from "../EntityPool";
+import { type KeyboardAction } from "../../input/KeyboardInput";
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
 import { Obstacle } from "./entity/Obstacle";

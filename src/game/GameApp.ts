@@ -6,7 +6,7 @@ import { BootFlow } from "../loading/BootFlow";
 import { OverlayManager } from "../ui/overlay/OverlayManager";
 import { UIRoot } from "../ui/UIRoot";
 import { HomeOverlay } from "../ui/overlay/HomeOverlay";
-import { GameWorld } from "../world/GameWorld";
+import { GameWorld } from "./world/GameWorld";
 import { KeyboardInput, type KeyboardAction } from "../input/KeyboardInput";
 
 export class GameApp {

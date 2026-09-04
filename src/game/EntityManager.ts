@@ -1,6 +1,6 @@
-import type { CollisionComponent } from "../world/component/CollisionComponent";
-import type { WorldEntity } from "../world/entity/base/WorldEntity";
-import type { GameWorld } from "../world/GameWorld";
+import type { CollisionComponent } from "./world/component/CollisionComponent";
+import type { WorldEntity } from "./world/entity/base/WorldEntity";
+import type { GameWorld } from "./world/GameWorld";
 
 export class EntityManager {
   private readonly _entities = new Set<WorldEntity>();

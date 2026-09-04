@@ -2,7 +2,7 @@ import { Assets, WRAP_MODES } from "pixi.js";
 import { Mesh3D } from "pixi3d/pixi7";
 
 import { StaticEntity } from "./base/StaticEntity";
-import { TrackMaterial } from "../../rendering/materials/track/TrackMaterial";
+import { TrackMaterial } from "../../../rendering/materials/track/TrackMaterial";
 import { PlaneGeometry } from "../geometry/PlaneGeometry";
 import { TRACK_CONFIG } from "../configs/GameConfig";
 

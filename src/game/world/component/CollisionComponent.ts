@@ -19,7 +19,6 @@ export class CollisionComponent {
   readonly layer: CollisionLayer;
 
   private _enabled: boolean;
-  private _onCollide?: (collision: WorldEntity) => void;
 
   constructor(entity: WorldEntity, options: CollisionComponentOptions) {
     this.entity = entity;
