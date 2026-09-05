@@ -162,6 +162,10 @@ export class GameApp {
   private addCollection(): void {
     const collections = this._gameProgress.addCollection();
     this._gameUI.setCollections(collections);
+
+    if (collections >= PICKUP_CONFIG.pointTarget) {
+      this._gameState.end(GameResult.Won);
+    }
   }
 
   private resetGameProgress(): void {
@@ -179,6 +183,7 @@ export class GameApp {
           this._gameWorld.resume();
         } else {
           this._gameWorld.start();
+          this.resetGameProgress();
         }
 
         this._gameUI.show();

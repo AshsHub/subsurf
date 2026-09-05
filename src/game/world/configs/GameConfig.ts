@@ -11,7 +11,7 @@ export const GAME_SPEED: GameSpeedConfig = {
 };
 
 export const PICKUP_CONFIG = {
-  pointTarget: 20,
+  pointTarget: 10,
 };
 
 export const TRACK_CONFIG = {

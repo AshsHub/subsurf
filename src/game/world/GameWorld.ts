@@ -44,7 +44,6 @@ export class GameWorld extends Container3D {
   private _player!: Player;
 
   private _speed = GAME_SPEED.initial;
-  private _collectionCount = 0;
 
   constructor(onCollision?: CollisionHandler) {
     super();
@@ -63,10 +62,6 @@ export class GameWorld extends Container3D {
     return this._speed;
   }
 
-  public get collectionCount(): number {
-    return this._collectionCount;
-  }
-
   public async init(): Promise<void> {
     this._entityManager.init(this, this._collisionManager);
 
@@ -79,12 +74,9 @@ export class GameWorld extends Container3D {
 
   public start(): void {
     this._speed = GAME_SPEED.initial;
-    this._collectionCount = 0;
-
     this._player.reset();
     this._entityManager.reset();
     this._spawnManager.reset();
-
     this._spawnManager.start();
   }
 
@@ -102,10 +94,7 @@ export class GameWorld extends Container3D {
 
   public reset(): void {
     this._spawnManager.reset();
-
     this._speed = GAME_SPEED.initial;
-    this._collectionCount = 0;
-
     this._player.reset();
     this._entityManager.reset();
   }
