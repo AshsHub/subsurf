@@ -3,7 +3,8 @@ import { EntityPool, POOL_ID, type Poolable } from "./EntityPool";
 
 import type { WorldEntity } from "./world/entity/base/WorldEntity";
 import { Collectible } from "./world/entity/Collectible";
-import { Obstacle } from "./world/entity/Obstacle";
+import { ShortObstacle } from "./world/entity/ShortObstacle";
+import { TallObstacle } from "./world/entity/TallObstacle";
 import type { GameWorld } from "./world/GameWorld";
 
 export class EntityManager {
@@ -23,7 +24,8 @@ export class EntityManager {
   }
 
   private _registerPools(): void {
-    this._entityPool.register(POOL_ID.obstacle, Obstacle.create, 5);
+    this._entityPool.register(POOL_ID.obstacle, TallObstacle.create);
+    this._entityPool.register(POOL_ID.obstacle_short, ShortObstacle.create);
     this._entityPool.register(POOL_ID.collectible, Collectible.create, 5);
   }
 

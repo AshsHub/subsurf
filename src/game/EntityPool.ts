@@ -11,6 +11,7 @@ interface IPool {
 
 export enum POOL_ID {
   obstacle,
+  obstacle_short,
   collectible,
 }
 

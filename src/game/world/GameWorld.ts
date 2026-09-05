@@ -158,10 +158,24 @@ export class GameWorld extends Container3D {
       return;
     }
 
-    const poolId = type === "o" ? POOL_ID.obstacle : POOL_ID.collectible;
-    const spawnedEntity: WorldEntity = this._entityManager.create(poolId);
-    spawnedEntity.spawn(lane, z);
-    this._entityManager.add(spawnedEntity, true);
+    if (type === "p") {
+      const collectible: WorldEntity = this._entityManager.create(
+        POOL_ID.collectible,
+      );
+
+      collectible.spawn(lane, z);
+      this._entityManager.add(collectible, true);
+
+      return;
+    }
+
+    const obstaclePoolId =
+      Math.random() < 0.5 ? POOL_ID.obstacle : POOL_ID.obstacle_short;
+
+    const obstacle: WorldEntity = this._entityManager.create(obstaclePoolId);
+
+    obstacle.spawn(lane, z);
+    this._entityManager.add(obstacle, true);
   }
 
   private _updateSpeed(deltaTime: number): void {

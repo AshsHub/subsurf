@@ -23,14 +23,6 @@ export const TRACK_CONFIG = {
   uvRepeatY: 5,
 };
 
-export const OBSTACLE_CONFIG = {
-  body: {
-    width: 1.5,
-    height: 0.6,
-    depth: 0.5,
-  },
-};
-
 export const COLLECTIBLE_CONFIG = {
   spinSpeed: 10,
 };
