@@ -6,9 +6,9 @@ export interface GameSpeedConfig {
 }
 
 export const GAME_SPEED: GameSpeedConfig = {
-  initial: 5,
+  initial: 0,
   maximum: 16,
-  acceleration: 0.18,
+  acceleration: 0.0000018,
   sideCollisionPenalty: 3,
 };
 

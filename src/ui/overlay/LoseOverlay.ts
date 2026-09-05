@@ -16,7 +16,7 @@ export class LoseOverlay extends ResultOverlay {
 
     this.alpha = 1;
     this._title.scale.set(1.2);
-    this._score.alpha = 0;
+    this._collections.alpha = 0;
     this._continueButton.alpha = 0;
   }
 
@@ -30,7 +30,7 @@ export class LoseOverlay extends ResultOverlay {
     });
 
     await Promise.all([
-      gsap.to(this._score, {
+      gsap.to(this._collections, {
         alpha: 1,
         duration: 0.3,
       }),

@@ -73,6 +73,7 @@ export class GameApp {
       const deltaTime = Math.min(app.ticker.deltaMS / 1000, 0.05);
 
       this._gameWorld.update(deltaTime);
+      this._gameProgress.addDistance(this._gameWorld.speed * deltaTime);
     });
 
     await this._assetLoader.init();
@@ -221,10 +222,7 @@ export class GameApp {
         void this._overlayManager.goTo(
           result === GameResult.Won ? OverlayId.EndWon : OverlayId.EndLost,
           {
-            meta: {
-              score: this._gameProgress.collections,
-              target: this._gameProgress.collectionTarget,
-            },
+            meta: { ...this._gameProgress.getStats() },
           },
         );
         break;

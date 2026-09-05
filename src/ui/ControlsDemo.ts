@@ -1,5 +1,6 @@
 import { Container, Graphics, Text } from "pixi.js";
 import gsap from "gsap";
+import { Character } from "./Character";
 
 export class ControlsDemo extends Container {
   private readonly _config = {
@@ -12,15 +13,12 @@ export class ControlsDemo extends Container {
     spaceHeight: 56,
     spaceGap: 18,
 
-    characterY: 0,
-    shadowY: 18,
-    jumpHeight: 64,
-
     scale: 1.5,
     controlPadding: 24,
     minScale: 0.65,
 
     characterMove: 64,
+    characterSpeed: 140,
   };
 
   private readonly _controlsContainer: Container;
@@ -28,8 +26,7 @@ export class ControlsDemo extends Container {
   private readonly _leftKey: Container;
   private readonly _rightKey: Container;
   private readonly _spaceKey: Container;
-  private readonly _character: Container;
-  private readonly _characterShadow: Graphics;
+  private readonly _character: Character;
 
   private readonly _timeline: gsap.core.Timeline;
 
@@ -56,16 +53,12 @@ export class ControlsDemo extends Container {
       this._config.spaceHeight,
     );
 
-    const characterResult = this._createCharacter();
-
-    this._character = characterResult.character;
-    this._characterShadow = characterResult.shadow;
+    this._character = new Character();
 
     this._controlsContainer.addChild(
       this._leftKey,
       this._rightKey,
       this._spaceKey,
-      this._characterShadow,
       this._character,
     );
 
@@ -108,6 +101,7 @@ export class ControlsDemo extends Container {
       onComplete: () => {
         this.visible = false;
         this._timeline.pause();
+        this._character.reset();
       },
     });
   }
@@ -130,149 +124,101 @@ export class ControlsDemo extends Container {
     );
 
     this._controlsContainer.scale.set(scale);
+
     this._controlsContainer.position.set(width / 2, height * 0.7);
-    this._character.position.set(0, this._config.characterY);
-    this._characterShadow.position.set(0, this._config.shadowY);
+
     this._leftKey.position.set(-horizontalOffset, 0);
+
     this._rightKey.position.set(horizontalOffset, 0);
+
     this._spaceKey.position.set(
       0,
       this._config.keyHeight + this._config.spaceGap,
     );
   }
 
-  private _buildAnimation(): void {
-    const movement = { x: 0 };
-    const jump = { y: 0 };
+  private _addKeyAnimation(
+    key: gsap.TweenTarget,
+    action: () => void,
+    options?: {
+      scaleX?: number;
+      scaleY?: number;
+      delay?: number;
+    },
+  ): void {
+    const { scaleX = 0.9, scaleY = 0.9, delay = 0.5 } = options ?? {};
 
     this._timeline
-      .set(movement, { x: 0 })
-      .set(jump, { y: 0 })
-      .set(this._character, {
-        x: 0,
-        y: this._config.characterY,
-      })
-      .set(this._characterShadow, {
-        x: 0,
-        y: this._config.shadowY,
-      })
-      .set(this._characterShadow.scale, {
-        x: 1,
-        y: 1,
-      })
+      .to(
+        key,
+        {
+          x: scaleX,
+          y: scaleY,
+          duration: 0.15,
+          ease: "power2.out",
 
-      .to(this._leftKey.scale, {
-        x: 0.9,
-        y: 0.9,
-        duration: 0.12,
-        ease: "power2.out",
-      })
-      .to(
-        movement,
-        {
-          x: -this._config.characterMove,
-          duration: 0.45,
-          ease: "power2.inOut",
-          onUpdate: () => {
-            this._character.x = movement.x;
-            this._characterShadow.x = movement.x;
-          },
+          onStart: action,
         },
-        "<",
+        `+=${delay}`,
       )
-      .to(this._leftKey.scale, {
+      .to(key, {
         x: 1,
         y: 1,
-        duration: 0.12,
-        ease: "back.out(2)",
-      })
-
-      .to(
-        this._rightKey.scale,
-        {
-          x: 0.9,
-          y: 0.9,
-          duration: 0.12,
-          ease: "power2.out",
-        },
-        "+=0.1",
-      )
-      .to(
-        movement,
-        {
-          x: 0,
-          duration: 0.45,
-          ease: "power2.inOut",
-          onUpdate: () => {
-            this._character.x = movement.x;
-            this._characterShadow.x = movement.x;
-          },
-        },
-        "<",
-      )
-      .to(this._rightKey.scale, {
-        x: 1,
-        y: 1,
-        duration: 0.12,
-        ease: "back.out(2)",
-      })
-
-      .to(
-        this._spaceKey.scale,
-        {
-          x: 0.92,
-          y: 0.88,
-          duration: 0.12,
-          ease: "power2.out",
-        },
-        "+=0.15",
-      )
-      .to(
-        this._characterShadow.scale,
-        {
-          x: 0.55,
-          y: 0.55,
-          duration: 0.2,
-          ease: "power2.out",
-        },
-        "<",
-      )
-      .to(
-        jump,
-        {
-          y: -this._config.jumpHeight,
-          duration: 0.24,
-          ease: "power2.out",
-          onUpdate: () => {
-            this._character.y = this._config.characterY + jump.y;
-          },
-        },
-        "<",
-      )
-      .to(jump, {
-        y: 0,
-        duration: 0.3,
-        ease: "power2.in",
-        onUpdate: () => {
-          this._character.y = this._config.characterY + jump.y;
-        },
-      })
-      .to(
-        this._characterShadow.scale,
-        {
-          x: 1,
-          y: 1,
-          duration: 0.2,
-          ease: "back.out(2)",
-        },
-        "<0.12",
-      )
-      .to(this._spaceKey.scale, {
-        x: 1,
-        y: 1,
-        duration: 0.18,
+        duration: 0.25,
         ease: "back.out(2)",
       });
+  }
+
+  private _buildAnimation(): void {
+    this._timeline.clear();
+
+    this._addKeyAnimation(this._leftKey.scale, () => {
+      this._character
+        .moveLeft(this._config.characterMove, this._config.characterSpeed)
+        .play();
+    });
+
+    this._addKeyAnimation(this._rightKey.scale, () => {
+      this._character
+        .moveRight(this._config.characterMove, this._config.characterSpeed)
+        .play();
+    });
+
+    this._addKeyAnimation(
+      this._spaceKey.scale,
+      () => {
+        this._character.jump().play();
+      },
+      {
+        scaleX: 0.92,
+        scaleY: 0.88,
+      },
+    );
+
+    this._addKeyAnimation(this._rightKey.scale, () => {
+      this._character
+        .moveRight(this._config.characterMove, this._config.characterSpeed)
+        .play();
+    });
+
+    this._addKeyAnimation(this._leftKey.scale, () => {
+      this._character
+        .moveLeft(this._config.characterMove, this._config.characterSpeed)
+        .play();
+    });
+
+    this._addKeyAnimation(
+      this._spaceKey.scale,
+      () => {
+        this._character.jump().play();
+      },
+      {
+        scaleX: 0.92,
+        scaleY: 0.88,
+      },
+    );
+
+    this._timeline.repeat(-1);
   }
 
   private _createKey(label: string, width: number, height: number): Container {
@@ -293,7 +239,7 @@ export class ControlsDemo extends Container {
 
     const text = new Text(label, {
       fontFamily: "Bungee Regular",
-      fontSize: label === "SPACE" ? 16 : 30,
+      fontSize: label.includes("SPACE") ? 16 : 30,
       fill: 0xffffff,
       align: "center",
     });
@@ -302,66 +248,23 @@ export class ControlsDemo extends Container {
     text.position.set(width / 2, height / 2);
 
     key.addChild(shadow, body, text);
+
     key.pivot.set(width / 2, height / 2);
 
     return key;
   }
 
-  private _createCharacter(): {
-    character: Container;
-    shadow: Graphics;
-  } {
-    const character = new Container();
+  public override destroy(
+    options?:
+      | boolean
+      | {
+          children?: boolean;
+          texture?: boolean;
+          baseTexture?: boolean;
+        },
+  ): void {
+    this._timeline.kill();
 
-    const shadow = new Graphics();
-
-    shadow.beginFill(0x000000, 0.22);
-    shadow.drawEllipse(0, -4, 46, 9);
-    shadow.endFill();
-
-    const body = new Graphics();
-
-    body.lineStyle(2, 0xffffff, 0.9);
-    body.beginFill(0x8bd8ff);
-    body.drawRoundedRect(-20, -25, 40, 42, 15);
-    body.endFill();
-
-    const visor = new Graphics();
-
-    visor.lineStyle(1, 0xffffff, 0.35);
-    visor.beginFill(0x18202b);
-    visor.drawRoundedRect(-13, -17, 26, 15, 7);
-    visor.endFill();
-
-    const leftEye = new Graphics();
-
-    leftEye.beginFill(0xffffff);
-    leftEye.drawCircle(-6, -10, 2);
-    leftEye.endFill();
-
-    const rightEye = new Graphics();
-
-    rightEye.beginFill(0xffffff);
-    rightEye.drawCircle(6, -10, 2);
-    rightEye.endFill();
-
-    const leftFoot = new Graphics();
-
-    leftFoot.beginFill(0x5a9ec5);
-    leftFoot.drawRoundedRect(-16, 10, 11, 8, 4);
-    leftFoot.endFill();
-
-    const rightFoot = new Graphics();
-
-    rightFoot.beginFill(0x5a9ec5);
-    rightFoot.drawRoundedRect(5, 10, 11, 8, 4);
-    rightFoot.endFill();
-
-    character.addChild(body, visor, leftEye, rightEye, leftFoot, rightFoot);
-
-    return {
-      character,
-      shadow,
-    };
+    super.destroy(options);
   }
 }

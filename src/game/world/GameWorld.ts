@@ -22,11 +22,10 @@ import { SpawnManager, type SpawnData } from "../SpawnManager";
 import { CollisionLayer } from "./component/Collider";
 import { GAME_SPEED } from "./configs/GameConfig";
 import { PATTERNS, SPAWN_CONFIG } from "./configs/SpawnConfig";
-import type { WorldEntity } from "./entity/base/WorldEntity";
 import type { Collectible } from "./entity/Collectible";
+import { Obstacle } from "./entity/Obstacle";
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
-import { Obstacle } from "./entity/Obstacle";
 
 export class GameWorld extends Container3D {
   public onHitObstacle: Subject<void> = new Subject<void>();

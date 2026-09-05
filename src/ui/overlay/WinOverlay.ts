@@ -17,7 +17,7 @@ export class WinOverlay extends ResultOverlay {
 
     this.alpha = 1;
     this._title.scale.set(0.5);
-    this._score.scale.set(0.5);
+    this._collections.scale.set(0.5);
     this._continueButton.alpha = 0;
   }
 
@@ -32,7 +32,7 @@ export class WinOverlay extends ResultOverlay {
         ease: "back.out(1.7)",
       }),
 
-      gsap.to(this._score.scale, {
+      gsap.to(this._collections.scale, {
         x: 1,
         y: 1,
         duration: 0.5,
