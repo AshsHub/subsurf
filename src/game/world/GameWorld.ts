@@ -5,26 +5,20 @@ import {
   LightingEnvironment,
   Skybox,
 } from "pixi3d/pixi7";
+import { Assets } from "pixi.js";
 
-import { EntityManager } from "../EntityManager";
-import { EntityPool } from "../EntityPool";
 import { type KeyboardAction } from "../../input/KeyboardInput";
-
+import { CollisionManager, type CollisionHandler } from "../CollisionManager";
+import { CollisionDebugRenderer } from "../debug/CollisionDebugRenderer";
+import { EntityManager } from "../EntityManager";
+import { POOL_ID } from "../EntityPool";
+import { SpawnManager } from "../SpawnManager";
+import { GAME_SPEED } from "./configs/GameConfig";
+import { type Lane } from "./configs/LaneConfig";
+import { PATTERNS, SPAWN_CONFIG, type SpawnCell } from "./configs/SpawnConfig";
+import type { WorldEntity } from "./entity/base/WorldEntity";
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
-import { Obstacle } from "./entity/Obstacle";
-
-import { type Lane } from "./configs/LaneConfig";
-import { GAME_SPEED } from "./configs/GameConfig";
-
-import { CollisionManager, type CollisionHandler } from "../CollisionManager";
-
-import { CollisionDebugRenderer } from "../debug/CollisionDebugRenderer";
-
-import { SpawnManager } from "../SpawnManager";
-
-import { PATTERNS, SPAWN_CONFIG, type SpawnCell } from "./configs/SpawnConfig";
-import { Assets } from "pixi.js";
 
 export class GameWorld extends Container3D {
   private readonly _entityManager = new EntityManager();
@@ -39,22 +33,18 @@ export class GameWorld extends Container3D {
     },
   );
 
-  private readonly _entityPool = new EntityPool();
-
-  private readonly _activeObstacles = new Set<Obstacle>();
-
   private readonly _collisionDebug: CollisionDebugRenderer;
 
   private _track!: Track;
   private _player!: Player;
 
   private _speed = GAME_SPEED.initial;
+  private _collectionCount = 0;
 
   constructor(onCollision?: CollisionHandler) {
     super();
 
     this._collisionManager = new CollisionManager(onCollision);
-
     this._collisionDebug = new CollisionDebugRenderer(
       this,
       this._collisionManager,
@@ -65,77 +55,58 @@ export class GameWorld extends Container3D {
     return this._speed;
   }
 
+  public get collectionCount(): number {
+    return this._collectionCount;
+  }
+
   public async init(): Promise<void> {
     this._entityManager.init(this, this._collisionManager);
 
-    this._registerPools();
-
     this._track = this._entityManager.add(Track.create());
-
     this._player = this._entityManager.add(Player.create());
+
     await this.setupSkybox();
-
     this.setupLighting();
-  }
-
-  private async setupSkybox(): Promise<void> {
-    const cubemap = Cubemap.fromFaces({
-      posx: Assets.get("right"),
-      negx: Assets.get("left"),
-      posy: Assets.get("top"),
-      negy: Assets.get("bottom"),
-      posz: Assets.get("front"),
-      negz: Assets.get("back"),
-    });
-
-    this.addChild(new Skybox(cubemap));
   }
 
   public start(): void {
     this._speed = GAME_SPEED.initial;
+    this._collectionCount = 0;
 
     this._player.reset();
-
+    this._entityManager.reset();
     this._spawnManager.reset();
+
     this._spawnManager.start();
   }
 
   public pause(): void {
-    this._spawnManager.stop();
+    this._spawnManager.pause();
   }
 
   public resume(): void {
-    this._spawnManager.start();
+    this._spawnManager.resume();
   }
 
-  public gameOver(): void {
-    this._spawnManager.stop();
+  public end(): void {
+    this._spawnManager.end();
   }
 
   public reset(): void {
-    this._spawnManager.stop();
     this._spawnManager.reset();
 
     this._speed = GAME_SPEED.initial;
+    this._collectionCount = 0;
 
     this._player.reset();
-
-    for (const obstacle of [...this._activeObstacles]) {
-      this._despawnObstacle(obstacle);
-    }
+    this._entityManager.reset();
   }
 
   public update(deltaTime: number): void {
     this._updateSpeed(deltaTime);
-
     this._entityManager.update(deltaTime, this._speed);
-
     this._spawnManager.update(deltaTime, this._speed);
-
     this._collisionManager.update();
-
-    this._checkObstacles();
-
     this._collisionDebug.update();
   }
 
@@ -157,33 +128,21 @@ export class GameWorld extends Container3D {
 
   public destroy(): void {
     this._entityManager.clear();
-    this._entityPool.clear();
-
     super.destroy();
   }
 
   private _spawn(type: SpawnCell, lane: Lane, z: number): void {
-    switch (type) {
-      case "o":
-        this._spawnObstacle(lane, z);
-        break;
-
-      case "p":
-        break;
-
-      case "x":
-        break;
+    if (type === "x") {
+      return;
     }
-  }
 
-  private _spawnObstacle(lane: Lane, z: number): void {
-    const obstacle = this._entityPool.create<Obstacle>(Obstacle.poolId);
+    const poolId = type === "o" ? POOL_ID.obstacle : POOL_ID.collectible;
 
-    obstacle.spawn(lane, z);
+    const spawnedEntity: WorldEntity = this._entityManager.create(poolId);
 
-    this._activeObstacles.add(obstacle);
+    spawnedEntity.spawn(lane, z);
 
-    this._entityManager.add(obstacle);
+    this._entityManager.add(spawnedEntity, true);
   }
 
   private _updateSpeed(deltaTime: number): void {
@@ -193,24 +152,17 @@ export class GameWorld extends Container3D {
     );
   }
 
-  private _registerPools(): void {
-    this._entityPool.register(Obstacle.poolId, Obstacle.create, 5);
-  }
+  private async setupSkybox(): Promise<void> {
+    const cubemap = Cubemap.fromFaces({
+      posx: Assets.get("right"),
+      negx: Assets.get("left"),
+      posy: Assets.get("top"),
+      negy: Assets.get("bottom"),
+      posz: Assets.get("front"),
+      negz: Assets.get("back"),
+    });
 
-  private _checkObstacles(): void {
-    for (const obstacle of this._activeObstacles) {
-      if (obstacle.position.z > 5) {
-        this._despawnObstacle(obstacle);
-      }
-    }
-  }
-
-  private _despawnObstacle(obstacle: Obstacle): void {
-    this._activeObstacles.delete(obstacle);
-
-    this._entityManager.remove(obstacle);
-
-    this._entityPool.release(Obstacle.poolId, obstacle);
+    this.addChild(new Skybox(cubemap));
   }
 
   private setupLighting(): void {

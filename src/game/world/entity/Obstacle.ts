@@ -3,9 +3,11 @@ import { DynamicEntity } from "./base/DynamicEntity";
 import { LANE_POSITIONS, type Lane } from "../configs/LaneConfig";
 import { OBSTACLE_CONFIG } from "../configs/GameConfig";
 import { Mesh3DCustom } from "../mesh/Mesh3DCustom";
+import { POOL_ID } from "../../EntityPool";
+import { CollisionLayer } from "../component/Collider";
 
 export class Obstacle extends DynamicEntity {
-  static readonly poolId = "obstacle";
+  readonly poolId = POOL_ID.obstacle;
   readonly body: Mesh3D;
 
   static create(): Obstacle {
@@ -28,7 +30,7 @@ export class Obstacle extends DynamicEntity {
       width: width * 0.8,
       height: height * 0.8,
       depth: depth * 0.8,
-      layer: "obstacle",
+      layer: CollisionLayer.Obstacle,
       offsetY: height / 2,
     });
   }

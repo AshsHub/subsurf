@@ -13,7 +13,11 @@ export interface ColliderOptions {
   enabled?: boolean;
 }
 
-export type CollisionLayer = "player" | "obstacle";
+export enum CollisionLayer {
+  Player,
+  Collectible,
+  Obstacle,
+}
 
 export class Collider {
   readonly entity: WorldEntity;

@@ -23,10 +23,19 @@ export const TRACK_CONFIG = {
 
 export const OBSTACLE_CONFIG = {
   body: {
-    width: 1,
-    height: 1,
-    depth: 1,
+    width: 1.5,
+    height: 0.6,
+    depth: 0.5,
   },
+};
+
+export const COLLECTIBLE_CONFIG = {
+  body: {
+    width: 0.5,
+    height: 0.5,
+    depth: 0.25,
+  },
+  spinSpeed: 10,
 };
 
 export const PLAYER_CONFIG = {

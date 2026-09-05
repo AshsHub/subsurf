@@ -9,6 +9,11 @@ interface IPool {
   clear(): void;
 }
 
+export enum POOL_ID {
+  obstacle,
+  collectible,
+}
+
 class Pool<T extends Poolable> implements IPool {
   private readonly _available: T[] = [];
   private readonly _create: () => T;
@@ -44,10 +49,10 @@ class Pool<T extends Poolable> implements IPool {
 }
 
 export class EntityPool {
-  private readonly _pools = new Map<string, IPool>();
+  private readonly _pools = new Map<POOL_ID, IPool>();
 
   register<T extends Poolable>(
-    id: string,
+    id: POOL_ID,
     create: () => T,
     initialSize = 0,
   ): void {
@@ -58,7 +63,7 @@ export class EntityPool {
     this._pools.set(id, new Pool(create, initialSize));
   }
 
-  create<T extends Poolable>(id: string): T {
+  create<T extends Poolable>(id: POOL_ID): T {
     const pool = this._pools.get(id);
 
     if (!pool) {
@@ -68,7 +73,7 @@ export class EntityPool {
     return pool.acquire() as T;
   }
 
-  release(id: string, entity: Poolable): void {
+  release(id: POOL_ID, entity: Poolable): void {
     const pool = this._pools.get(id);
 
     if (!pool) {

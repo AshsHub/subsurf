@@ -1,6 +1,6 @@
-import type { Collider } from "./world/component/Collider";
+import { CollisionLayer, type Collider } from "./world/component/Collider";
 
-export type CollisionHandler = (player: Collider, obstacle: Collider) => void;
+export type CollisionHandler = (player: Collider, collider: Collider) => void;
 
 export class CollisionManager {
   private readonly _colliders = new Set<Collider>();
@@ -43,7 +43,7 @@ export class CollisionManager {
           continue;
         }
 
-        if (a.layer === "player") {
+        if (a.layer === CollisionLayer.Player) {
           this._onCollision?.(a, b);
         } else {
           this._onCollision?.(b, a);
@@ -56,8 +56,14 @@ export class CollisionManager {
 
   private _canCollide(a: Collider, b: Collider): boolean {
     return (
-      (a.layer === "player" && b.layer === "obstacle") ||
-      (a.layer === "obstacle" && b.layer === "player")
+      (a.layer === CollisionLayer.Player &&
+        b.layer === CollisionLayer.Obstacle) ||
+      (a.layer === CollisionLayer.Obstacle &&
+        b.layer === CollisionLayer.Player) ||
+      (a.layer === CollisionLayer.Player &&
+        b.layer === CollisionLayer.Collectible) ||
+      (a.layer === CollisionLayer.Collectible &&
+        b.layer === CollisionLayer.Player)
     );
   }
 

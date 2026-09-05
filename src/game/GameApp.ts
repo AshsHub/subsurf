@@ -1,15 +1,23 @@
 import { Application } from "pixi.js";
 import { CameraOrbitControl } from "pixi3d/pixi7";
-import { GameStateManager, type GameStateChange } from "./GameState";
+
+import {
+  GameResult,
+  GameState,
+  GameStateManager,
+  type GameStateChange,
+} from "./GameState";
+
 import { AssetLoader } from "../loading/AssetLoader";
 import { BootFlow } from "../loading/BootFlow";
-import { OverlayManager } from "../ui/overlay/OverlayManager";
-import { UIRoot } from "../ui/UIRoot";
-import { HomeOverlay } from "../ui/overlay/HomeOverlay";
-import { GameWorld } from "./world/GameWorld";
-import { KeyboardInput, type KeyboardAction } from "../input/KeyboardInput";
-import { PauseOverlay } from "../ui/overlay/PauseOverlay";
 import { GameUI } from "../ui/GameUI";
+import { HomeOverlay } from "../ui/overlay/HomeOverlay";
+import { OverlayManager } from "../ui/overlay/OverlayManager";
+import { PauseOverlay } from "../ui/overlay/PauseOverlay";
+import { UIRoot } from "../ui/UIRoot";
+import { KeyboardInput, type KeyboardAction } from "../input/KeyboardInput";
+import { GameWorld } from "./world/GameWorld";
+import { CollisionLayer } from "./world/component/Collider";
 import { PICKUP_CONFIG } from "./world/configs/GameConfig";
 
 export class GameApp {
@@ -18,23 +26,27 @@ export class GameApp {
   private _gameUI!: GameUI;
   private _overlayManager!: OverlayManager;
 
-  private _gameState: GameStateManager = new GameStateManager();
+  private readonly _gameState = new GameStateManager();
 
-  private _assetLoader: AssetLoader = new AssetLoader();
+  private readonly _assetLoader = new AssetLoader();
 
-  private _gameWorld: GameWorld;
+  private readonly _keyboard = new KeyboardInput();
 
-  private readonly keyboard = new KeyboardInput();
+  private readonly _gameWorld: GameWorld;
 
   constructor() {
-    this._gameWorld = new GameWorld(() => {
-      this._gameState.end("lost");
+    this._gameWorld = new GameWorld((_player, collider) => {
+      if (collider.layer === CollisionLayer.Collectible) {
+        // Collection handling goes here.
+      } else if (collider.layer === CollisionLayer.Obstacle) {
+        this._gameState.end(GameResult.Lost);
+      }
     });
 
     this._gameState.onChange(this._onGameStateChange);
   }
 
-  async init(): Promise<void> {
+  public async init(): Promise<void> {
     const app = new Application({
       resizeTo: window,
       backgroundColor: 0xf9edf2,
@@ -44,13 +56,13 @@ export class GameApp {
     });
 
     app.ticker.add(() => {
-      if (this._gameState.state !== "playing") {
+      if (this._gameState.state !== GameState.Playing) {
         return;
       }
 
-      const dt = Math.min(app.ticker.deltaMS / 1000, 0.05);
+      const deltaTime = Math.min(app.ticker.deltaMS / 1000, 0.05);
 
-      this._gameWorld.update(dt);
+      this._gameWorld.update(deltaTime);
     });
 
     await this._assetLoader.init();
@@ -105,10 +117,9 @@ export class GameApp {
 
     app.stage.addChild(uiRoot, this._gameUI);
 
-    this.keyboard.onAction(this.onKeyboardAction);
+    this._keyboard.onAction(this.onKeyboardAction);
 
     this.initListeners();
-
     this.handleResize();
   }
 
@@ -118,16 +129,16 @@ export class GameApp {
 
   private readonly onKeyboardAction = (action: KeyboardAction): void => {
     if (action === "pause") {
-      if (this._gameState.state === "paused") {
+      if (this._gameState.state === GameState.Paused) {
         this._gameState.resume();
-      } else if (this._gameState.state === "playing") {
+      } else if (this._gameState.state === GameState.Playing) {
         this._gameState.pause();
       }
 
       return;
     }
 
-    if (this._gameState.state !== "playing") {
+    if (this._gameState.state !== GameState.Playing) {
       return;
     }
 
@@ -149,27 +160,33 @@ export class GameApp {
   }
 
   private readonly _onGameStateChange = ({
-    current,
+    from,
+    to,
   }: GameStateChange): void => {
-    switch (current) {
-      case "playing":
-        this._gameWorld.start();
+    switch (to) {
+      case GameState.Playing:
+        if (from === GameState.Paused) {
+          this._gameWorld.resume();
+        } else {
+          this._gameWorld.start();
+        }
+
         this._gameUI.show();
         this._overlayManager.goTo(null);
         break;
 
-      case "paused":
+      case GameState.Paused:
         this._gameWorld.pause();
         void this._overlayManager.goTo("pause");
         this._gameUI.hide();
         break;
 
-      case "ended":
-        this._gameWorld.gameOver();
+      case GameState.Ended:
+        this._gameWorld.end();
         this._gameUI.hide();
         break;
 
-      case "idle":
+      case GameState.Idle:
         this._gameWorld.reset();
         this._gameUI.hide();
         break;
@@ -185,11 +202,14 @@ export class GameApp {
     const height = window.innerHeight;
 
     this._gameUI.resize(width, height);
+
     this._overlayManager.handleResize(width, height);
   };
 
   public destroy(): void {
     window.removeEventListener("resize", this.handleResize);
+
+    this._keyboard.destroy();
 
     this._app?.destroy(true);
   }

@@ -1,7 +1,10 @@
 import { Container3D } from "pixi3d/pixi7";
 import { Collider, type ColliderOptions } from "../../component/Collider";
+import type { Lane } from "../../configs/LaneConfig";
+import type { POOL_ID } from "../../../EntityPool";
 
 export abstract class WorldEntity extends Container3D {
+  public abstract readonly poolId: POOL_ID;
   protected _shouldUpdate = false;
   private _entityDestroyed = false;
   private _active = true;
@@ -21,17 +24,16 @@ export abstract class WorldEntity extends Container3D {
     this.visible = value;
   }
 
-  get destroyed(): boolean {
-    return this._entityDestroyed;
-  }
-
   get active(): boolean {
     return this._active;
   }
 
   set active(value: boolean) {
-    this._active = value;
-    this.visible = value;
+    this._setActive(value);
+  }
+
+  get destroyed(): boolean {
+    return this._entityDestroyed;
   }
 
   get shouldUpdate() {
@@ -73,7 +75,9 @@ export abstract class WorldEntity extends Container3D {
     this.destroy({ children: true });
   }
 
-  onPoolRelease(): void {
+  public spawn(_lane: Lane, _z: number): void {}
+
+  public onPoolRelease(): void {
     this._setActive(false);
 
     if (this._collider) {
@@ -81,7 +85,7 @@ export abstract class WorldEntity extends Container3D {
     }
   }
 
-  onPoolAcquire(): void {
+  public onPoolAcquire(): void {
     this._setActive(true);
 
     if (this._collider) {

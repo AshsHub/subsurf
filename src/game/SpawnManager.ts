@@ -5,13 +5,15 @@ import type {
   SpawnPattern,
 } from "./world/configs/SpawnConfig";
 
+type SpawnState = "idle" | "running" | "paused" | "ended";
+
 export class SpawnManager {
   private readonly _patterns: readonly SpawnPattern[];
   private readonly _config: SpawnConfig;
 
   private readonly _spawn: (type: SpawnCell, lane: Lane, z: number) => void;
 
-  private _running = false;
+  private _state: SpawnState = "idle";
 
   private _currentPattern: SpawnPattern | null = null;
   private _rowIndex = 0;
@@ -34,26 +36,46 @@ export class SpawnManager {
   }
 
   public start(): void {
-    if (this._running) {
+    if (this._state !== "idle") {
       return;
     }
 
-    this._running = true;
+    this._state = "running";
 
     this._currentPattern = this._getRandomPattern();
     this._rowIndex = 0;
     this._consecutiveSkips = 0;
-
     this._timeUntilFirstSpawn = this._config.initialDelay;
     this._distanceUntilNextRow = 0;
   }
 
-  public stop(): void {
-    this._running = false;
+  public pause(): void {
+    if (this._state !== "running") {
+      return;
+    }
+
+    this._state = "paused";
+  }
+
+  public resume(): void {
+    if (this._state !== "paused") {
+      return;
+    }
+
+    this._state = "running";
+  }
+
+  public end(): void {
+    if (this._state !== "running" && this._state !== "paused") {
+      return;
+    }
+
+    this._state = "ended";
   }
 
   public reset(): void {
-    this._running = false;
+    this._state = "idle";
+
     this._currentPattern = null;
     this._rowIndex = 0;
     this._consecutiveSkips = 0;
@@ -62,13 +84,10 @@ export class SpawnManager {
   }
 
   public update(deltaTime: number, speed: number): void {
-    if (!this._running) {
+    if (this._state !== "running") {
       return;
     }
 
-    /*
-     * Initial delay is real time, so handle that separately.
-     */
     if (this._timeUntilFirstSpawn > 0) {
       this._timeUntilFirstSpawn -= deltaTime;
 
@@ -77,14 +96,8 @@ export class SpawnManager {
       }
     }
 
-    /*
-     * Convert movement speed into distance travelled this frame.
-     */
     this._distanceUntilNextRow -= speed * deltaTime;
 
-    /*
-     * Spawn rows whenever enough world-space distance has passed.
-     */
     while (this._distanceUntilNextRow <= 0) {
       this._processNextRow();
 
@@ -134,10 +147,6 @@ export class SpawnManager {
     const shouldSkip = canSkip && Math.random() < this._config.skipChance;
 
     if (shouldSkip) {
-      /*
-       * A skipped pattern still consumes the same amount
-       * of world-space distance that it would have occupied.
-       */
       this._distanceUntilNextRow +=
         nextPattern.rows.length * this._config.rowSpacing;
 
@@ -155,6 +164,7 @@ export class SpawnManager {
 
   private _startNextPattern(): void {
     this._currentPattern = this._getRandomPattern();
+
     this._rowIndex = 0;
   }
 

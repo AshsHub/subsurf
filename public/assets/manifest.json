@@ -33,10 +33,6 @@
           "src": "/assets/game-core/skybox/bottom.png"
         },
         {
-          "alias": "cubemap",
-          "src": "/assets/game-core/skybox/cubemap.png"
-        },
-        {
           "alias": "front",
           "src": "/assets/game-core/skybox/front.png"
         },
