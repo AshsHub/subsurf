@@ -105,7 +105,10 @@ export class CollisionManager {
     const overlapZ =
       Math.min(player.maxZ, collider.maxZ) -
       Math.max(player.minZ, collider.minZ);
-    if (overlapX <= overlapY && overlapX <= overlapZ) {
+
+    const sideTolerance = 0.15;
+
+    if (overlapX <= overlapZ + sideTolerance) {
       return player.centerX < collider.centerX
         ? CollisionSide.Right
         : CollisionSide.Left;

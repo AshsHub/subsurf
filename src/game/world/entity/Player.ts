@@ -543,7 +543,6 @@ export class Player extends DynamicEntity {
     const timeline = controller.timeline({
       onComplete: () => {
         if (subtle) {
-          this._isColliding = false;
           onComplete?.();
         } else {
           controller.delayedCall(1, () => {
@@ -554,28 +553,67 @@ export class Player extends DynamicEntity {
     });
 
     if (subtle) {
+      const cockpitY = this._cockpit.position.y;
+      const cockpitScale = this._cockpit.scale;
+
       timeline
         .to(this.visual.scale, {
-          x: 1.06,
-          y: 0.94,
-          z: 1.06,
+          x: 0.9,
+          y: 0.92,
+          z: 0.9,
           duration: 0.08,
-          ease: "power2.out",
+          ease: "power3.out",
         })
-        .to(this.visual.scale, {
-          x: 1,
-          y: 1,
-          z: 1,
-          duration: 0.16,
-          ease: "back.out(2)",
+        .to(
+          this._cockpit.position,
+          {
+            y: cockpitY + 0.5,
+            duration: 0.3,
+            ease: "power3.out",
+            onComplete: () => {
+              this._isColliding = false;
+            },
+          },
+          "<",
+        )
+        .to(
+          this._cockpit.scale,
+          {
+            x: cockpitScale.x * 1.12,
+            y: cockpitScale.y * 1.12,
+            z: cockpitScale.z * 1.12,
+            duration: 0.12,
+            ease: "back.out(2)",
+          },
+          "<",
+        )
+        .to(this._cockpit.position, {
+          y: cockpitY,
+          duration: 0.2,
+          ease: "bounce.out",
         })
-        .to(this.visual.rotationQuaternion, {
-          z: 5,
-          duration: 0.06,
-          yoyo: true,
-          repeat: 3,
-          ease: "sine.inOut",
-        });
+        .to(
+          this._cockpit.scale,
+          {
+            x: cockpitScale.x,
+            y: cockpitScale.y,
+            z: cockpitScale.z,
+            duration: 0.12,
+            ease: "back.out(2)",
+          },
+          "<0.08",
+        )
+        .to(
+          this.visual.scale,
+          {
+            x: 1,
+            y: 1,
+            z: 1,
+            duration: 0.16,
+            ease: "back.out(2)",
+          },
+          "<",
+        );
     } else {
       const rot = { x: 0 };
 
