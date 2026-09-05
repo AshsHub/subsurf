@@ -25,9 +25,18 @@ export class AnimationController {
 
   public timeline(vars?: gsap.TimelineVars): gsap.core.Timeline {
     const timeline = gsap.timeline(vars);
+
     this._animations.add(timeline);
 
     return timeline;
+  }
+
+  public delayedCall(delay: number, callback: () => void): gsap.core.Tween {
+    const animation = gsap.delayedCall(delay, callback);
+
+    this._animations.add(animation);
+
+    return animation;
   }
 
   public pause(): void {

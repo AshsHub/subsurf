@@ -1,9 +1,7 @@
 import { Assets } from "pixi.js";
 import {
-  Color,
   Container3D,
   Cubemap,
-  Fog,
   Light,
   LightingEnvironment,
   LightType,
@@ -23,12 +21,11 @@ import { POOL_ID } from "../EntityPool";
 import { SpawnManager, type SpawnData } from "../SpawnManager";
 import { CollisionLayer } from "./component/Collider";
 import { GAME_SPEED } from "./configs/GameConfig";
-import { type Lane } from "./configs/LaneConfig";
-import { PATTERNS, SPAWN_CONFIG, type SpawnCell } from "./configs/SpawnConfig";
+import { PATTERNS, SPAWN_CONFIG } from "./configs/SpawnConfig";
 import type { WorldEntity } from "./entity/base/WorldEntity";
+import type { Collectible } from "./entity/Collectible";
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
-import type { Collectible } from "./entity/Collectible";
 
 export class GameWorld extends Container3D {
   public onHitObstacle: Subject<void> = new Subject<void>();
@@ -44,6 +41,7 @@ export class GameWorld extends Container3D {
   private _player!: Player;
 
   private _speed = GAME_SPEED.initial;
+  private _incrementSpeed = true;
 
   constructor() {
     super();
@@ -102,6 +100,7 @@ export class GameWorld extends Container3D {
     this._speed = GAME_SPEED.initial;
     this._player.reset();
     this._entityManager.reset();
+    this._incrementSpeed = true;
   }
 
   public update(deltaTime: number): void {
@@ -132,21 +131,24 @@ export class GameWorld extends Container3D {
   }
 
   private _handleCollision(collision: CollisionResult): void {
-    const { collider } = collision;
+    const { player, collider } = collision;
+    collider.enabled = false;
     switch (collider.layer) {
       case CollisionLayer.Collectible:
         this.onScored.next();
-        collider.enabled = false;
         (collider.entity as Collectible).collect(() => {
           this._entityManager.remove(collider.entity);
         });
         break;
       case CollisionLayer.Obstacle:
         if (collision.side !== CollisionSide.Back) {
-          collider.enabled = false;
           this._reduceSpeed(GAME_SPEED.sideCollisionPenalty);
+          (player.entity as Player).collide(true);
         } else {
-          this.onHitObstacle.next();
+          this._haltSpeed();
+          (player.entity as Player).collide(false, () => {
+            this.onHitObstacle.next();
+          });
         }
     }
   }
@@ -179,10 +181,17 @@ export class GameWorld extends Container3D {
   }
 
   private _updateSpeed(deltaTime: number): void {
+    if (!this._incrementSpeed) return;
+
     this._speed = Math.min(
       this._speed + GAME_SPEED.acceleration * deltaTime,
       GAME_SPEED.maximum,
     );
+  }
+
+  private _haltSpeed(): void {
+    this._speed = 0;
+    this._incrementSpeed = false;
   }
 
   private _reduceSpeed(amount: number): void {
@@ -208,10 +217,6 @@ export class GameWorld extends Container3D {
   private setupLighting(): void {
     const environment = LightingEnvironment.main;
 
-    // --------------------------------------------------
-    // Player key
-    // --------------------------------------------------
-
     const playerKey = new Light();
 
     playerKey.type = LightType.point;
@@ -223,10 +228,6 @@ export class GameWorld extends Container3D {
     playerKey.color.g = 0.95;
     playerKey.color.b = 0.9;
 
-    // --------------------------------------------------
-    // Player fill
-    // --------------------------------------------------
-
     const playerFill = new Light();
 
     playerFill.type = LightType.point;
@@ -237,13 +238,6 @@ export class GameWorld extends Container3D {
     playerFill.color.r = 0.65;
     playerFill.color.g = 0.8;
     playerFill.color.b = 1;
-
-    // --------------------------------------------------
-    // Road light
-    //
-    // Gives visibility further down the road without
-    // illuminating the entire track.
-    // --------------------------------------------------
 
     const roadLight = new Light();
 

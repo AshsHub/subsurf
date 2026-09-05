@@ -63,7 +63,8 @@ export class Player extends DynamicEntity {
   private readonly jumpDuration = 0.65;
 
   private readonly laneMoveDuration = 0.2;
-  private laneMoving = false;
+  private _laneMoving = false;
+  private _isColliding = false;
 
   static create(): Player {
     return new Player();
@@ -157,7 +158,7 @@ export class Player extends DynamicEntity {
     });
 
     this._cockpit.scale.set(0.5, 0.35, 0.5);
-    this._cockpit.position.set(0, 0.7, 0);
+    this._cockpit.position.set(0, 0.6, 0);
 
     //! Engine
 
@@ -219,7 +220,7 @@ export class Player extends DynamicEntity {
   }
 
   moveLeft(): void {
-    if (this.lane <= 0 || this.laneMoving) {
+    if (this.lane <= 0 || this._laneMoving || this._isColliding) {
       return;
     }
 
@@ -228,7 +229,11 @@ export class Player extends DynamicEntity {
   }
 
   moveRight(): void {
-    if (this.lane >= LANE_POSITIONS.length - 1 || this.laneMoving) {
+    if (
+      this.lane >= LANE_POSITIONS.length - 1 ||
+      this._laneMoving ||
+      this._isColliding
+    ) {
       return;
     }
 
@@ -237,7 +242,7 @@ export class Player extends DynamicEntity {
   }
 
   jump(): void {
-    if (this.airborne) {
+    if (this.airborne || this._isColliding) {
       return;
     }
 
@@ -298,7 +303,7 @@ export class Player extends DynamicEntity {
 
   private setLane(lane: Lane): void {
     this.lane = lane;
-    this.laneMoving = true;
+    this._laneMoving = true;
 
     this.animationController!.to(this.position, {
       x: LANE_POSITIONS[lane],
@@ -306,7 +311,7 @@ export class Player extends DynamicEntity {
       ease: "power2.out",
       onComplete: () => {
         this.position.x = LANE_POSITIONS[lane];
-        this.laneMoving = false;
+        this._laneMoving = false;
       },
     });
   }
@@ -529,7 +534,78 @@ export class Player extends DynamicEntity {
     });
   }
 
+  public collide(subtle: boolean, onComplete?: () => void): void {
+    this._isColliding = true;
+
+    if (!subtle) this.animationController?.kill();
+
+    const controller = this.animationController!;
+    const timeline = controller.timeline({
+      onComplete: () => {
+        if (subtle) {
+          this._isColliding = false;
+          onComplete?.();
+        } else {
+          controller.delayedCall(1, () => {
+            onComplete?.();
+          });
+        }
+      },
+    });
+
+    if (subtle) {
+      timeline
+        .to(this.visual.scale, {
+          x: 1.06,
+          y: 0.94,
+          z: 1.06,
+          duration: 0.08,
+          ease: "power2.out",
+        })
+        .to(this.visual.scale, {
+          x: 1,
+          y: 1,
+          z: 1,
+          duration: 0.16,
+          ease: "back.out(2)",
+        })
+        .to(this.visual.rotationQuaternion, {
+          z: 5,
+          duration: 0.06,
+          yoyo: true,
+          repeat: 3,
+          ease: "sine.inOut",
+        });
+    } else {
+      const rot = { x: 0 };
+
+      timeline
+        .to(this.visual.position, {
+          y: 0.5,
+          duration: 0.1,
+          ease: "power2.in",
+        })
+        .to(
+          rot,
+          {
+            x: 80,
+            duration: 0.2,
+            ease: "power2.out",
+            onUpdate: () => {
+              this.visual.rotationQuaternion.setEulerAngles(-rot.x, 0, 0);
+            },
+          },
+          "<",
+        );
+
+      this._engine.visible = false;
+      this._engineLight.intensity = 0;
+    }
+  }
+
   private _updateEngineLight(dt: number): void {
+    if (this._isColliding) return;
+
     this._engineLightTime += dt;
 
     const flicker =
@@ -562,7 +638,7 @@ export class Player extends DynamicEntity {
     this.ufo.position.set(0, 0, 0);
 
     this.airborne = false;
-    this.laneMoving = false;
+    this._laneMoving = false;
 
     this._engineLightTime = 0;
     this._engineScroll = 0;
@@ -581,6 +657,11 @@ export class Player extends DynamicEntity {
     this._ufoRotation.z = 0;
 
     this._bodySpin.y = 0;
+
+    this._isColliding = false;
+
+    this.visual.position.set(0);
+    this.visual.rotationQuaternion.setEulerAngles(0, 0, 0);
 
     this._applyUfoRotation();
     this._startIdleAnimation();

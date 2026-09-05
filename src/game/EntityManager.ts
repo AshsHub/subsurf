@@ -16,6 +16,7 @@ export class EntityManager {
   private _collisionManager!: CollisionManager;
   private _gameWorld!: GameWorld;
   private _paused = false;
+  protected _movementEnabled = true;
 
   public init(world: GameWorld, collisionManager: CollisionManager): void {
     this._gameWorld = world;
@@ -161,11 +162,6 @@ export class EntityManager {
     return [...this._activeEntities];
   }
 
-  /**
-   * Permanently destroy every entity owned by the manager
-   * and clear all pools.
-   * Use this when the entire world is being destroyed.
-   */
   public clear(): void {
     for (const entity of this.getEntities()) {
       this.destroy(entity);
@@ -179,11 +175,6 @@ export class EntityManager {
     this._entityPool.clear();
   }
 
-  /**
-   * Reset the current game run.
-   * Runtime entities are recycled rather than destroyed so
-   * they can be reused on the next game.
-   */
   public reset(): void {
     for (const entity of this.getActiveEntities()) {
       this.remove(entity);
