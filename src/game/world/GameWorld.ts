@@ -26,6 +26,7 @@ import type { WorldEntity } from "./entity/base/WorldEntity";
 import type { Collectible } from "./entity/Collectible";
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
+import { Obstacle } from "./entity/Obstacle";
 
 export class GameWorld extends Container3D {
   public onHitObstacle: Subject<void> = new Subject<void>();
@@ -42,6 +43,7 @@ export class GameWorld extends Container3D {
 
   private _speed = GAME_SPEED.initial;
   private _incrementSpeed = true;
+  private _consecutiveTallObstacles = 0;
 
   constructor() {
     super();
@@ -160,24 +162,31 @@ export class GameWorld extends Container3D {
       return;
     }
 
-    if (type === "p") {
-      const collectible: WorldEntity = this._entityManager.create(
+    if (type === "c") {
+      const collectible = this._entityManager.create<Collectible>(
         POOL_ID.collectible,
       );
 
       collectible.spawn(lane, z);
       this._entityManager.add(collectible, true);
 
+      this._consecutiveTallObstacles = 0;
+
       return;
     }
 
-    const obstaclePoolId =
-      Math.random() < 0.5 ? POOL_ID.obstacle : POOL_ID.obstacle_short;
-
-    const obstacle: WorldEntity = this._entityManager.create(obstaclePoolId);
+    const useTall = this._consecutiveTallObstacles < 2 && Math.random() < 0.5;
+    const poolId = useTall ? POOL_ID.obstacle : POOL_ID.obstacle_short;
+    const obstacle = this._entityManager.create<Obstacle>(poolId);
 
     obstacle.spawn(lane, z);
     this._entityManager.add(obstacle, true);
+
+    if (useTall) {
+      this._consecutiveTallObstacles++;
+    } else {
+      this._consecutiveTallObstacles = 0;
+    }
   }
 
   private _updateSpeed(deltaTime: number): void {

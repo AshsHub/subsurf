@@ -1,9 +1,10 @@
-export type SpawnCell = "x" | "p" | "o";
+export type SpawnCell = "x" | "c" | "o";
 
 export type SpawnRow = [SpawnCell, SpawnCell, SpawnCell];
 
 export interface SpawnPattern {
   rows: readonly SpawnRow[];
+  hasCollectible: boolean;
 }
 
 export interface SpawnConfig {
@@ -12,63 +13,63 @@ export interface SpawnConfig {
   initialDelay: number;
   skipChance: number;
   maxConsecutiveSkips: number;
+  maxPatternsWithoutCollectible: number;
 }
 
 export const SPAWN_CONFIG: SpawnConfig = {
   spawnZ: -35,
-  // Distance between rows.
-  rowSpacing: 5,
-  // Seconds before the first pattern starts.
-  initialDelay: 2,
-  // 25% chance to skip a completed pattern.
+  rowSpacing: 6,
+  initialDelay: 1,
   skipChance: 0.25,
-  // Never skip more than this many patterns consecutively.
   maxConsecutiveSkips: 2,
+  maxPatternsWithoutCollectible: 4,
 };
 
 export const PATTERNS: readonly SpawnPattern[] = [
-  // 1. Three-wide wall
   {
-    rows: [["o", "o", "o"]],
+    rows: [
+      ["c", "c", "c"],
+      ["o", "o", "o"],
+    ],
+    hasCollectible: false,
   },
 
-  // 2. Outer lanes
   {
     rows: [
       ["o", "x", "o"],
       ["o", "x", "o"],
       ["o", "x", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 3. Centre lane
   {
     rows: [
       ["x", "o", "x"],
       ["x", "o", "x"],
       ["x", "o", "x"],
     ],
+    hasCollectible: false,
   },
 
-  // 4. Left → centre → right
   {
     rows: [
       ["o", "x", "x"],
       ["x", "o", "x"],
       ["x", "x", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 5. Right → centre → left
   {
     rows: [
       ["x", "x", "o"],
       ["x", "o", "x"],
       ["o", "x", "x"],
     ],
+    hasCollectible: false,
   },
 
-  // 6. Zig-zag
   {
     rows: [
       ["o", "x", "x"],
@@ -76,9 +77,9 @@ export const PATTERNS: readonly SpawnPattern[] = [
       ["o", "x", "x"],
       ["x", "x", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 7. Centre → left → centre → right
   {
     rows: [
       ["x", "o", "x"],
@@ -86,36 +87,36 @@ export const PATTERNS: readonly SpawnPattern[] = [
       ["x", "o", "x"],
       ["x", "x", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 8. Outer → centre → outer
   {
     rows: [
       ["o", "x", "o"],
       ["x", "o", "x"],
       ["o", "x", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 9. Left lane blocked
   {
     rows: [
       ["o", "x", "x"],
       ["o", "o", "x"],
       ["o", "x", "x"],
     ],
+    hasCollectible: false,
   },
 
-  // 10. Right lane blocked
   {
     rows: [
       ["x", "x", "o"],
       ["x", "o", "o"],
       ["x", "x", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 11. Alternating walls
   {
     rows: [
       ["o", "o", "x"],
@@ -123,9 +124,9 @@ export const PATTERNS: readonly SpawnPattern[] = [
       ["o", "o", "x"],
       ["x", "o", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 12. Opening moves from left to right
   {
     rows: [
       ["o", "o", "x"],
@@ -134,9 +135,9 @@ export const PATTERNS: readonly SpawnPattern[] = [
       ["x", "x", "o"],
       ["x", "o", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 13. Opening moves from right to left
   {
     rows: [
       ["x", "o", "o"],
@@ -145,27 +146,27 @@ export const PATTERNS: readonly SpawnPattern[] = [
       ["o", "x", "x"],
       ["o", "o", "x"],
     ],
+    hasCollectible: false,
   },
 
-  // 14. Single gaps moving across lanes
   {
     rows: [
       ["x", "o", "o"],
       ["o", "x", "o"],
       ["o", "o", "x"],
     ],
+    hasCollectible: false,
   },
 
-  // 15. Single safe lane moving across lanes
   {
     rows: [
       ["x", "o", "x"],
       ["x", "x", "o"],
       ["o", "x", "x"],
     ],
+    hasCollectible: false,
   },
 
-  // 16. Alternating single obstacle
   {
     rows: [
       ["o", "x", "x"],
@@ -174,9 +175,9 @@ export const PATTERNS: readonly SpawnPattern[] = [
       ["x", "o", "x"],
       ["o", "x", "x"],
     ],
+    hasCollectible: false,
   },
 
-  // 17. Dense → sparse → dense
   {
     rows: [
       ["o", "o", "o"],
@@ -185,9 +186,9 @@ export const PATTERNS: readonly SpawnPattern[] = [
       ["o", "x", "o"],
       ["o", "o", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 18. Centre corridor
   {
     rows: [
       ["o", "x", "o"],
@@ -196,9 +197,9 @@ export const PATTERNS: readonly SpawnPattern[] = [
       ["o", "x", "o"],
       ["o", "x", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 19. Left/right alternation with centre openings
   {
     rows: [
       ["o", "x", "x"],
@@ -206,9 +207,9 @@ export const PATTERNS: readonly SpawnPattern[] = [
       ["x", "x", "o"],
       ["x", "o", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 20. Long zig-zag
   {
     rows: [
       ["o", "x", "x"],
@@ -218,59 +219,60 @@ export const PATTERNS: readonly SpawnPattern[] = [
       ["o", "x", "x"],
       ["x", "x", "o"],
     ],
+    hasCollectible: false,
   },
 
-  // 21. Pickup corridor
   {
     rows: [
-      ["o", "p", "o"],
-      ["o", "p", "o"],
-      ["o", "p", "o"],
-      ["x", "p", "x"],
+      ["o", "c", "o"],
+      ["o", "c", "o"],
+      ["o", "c", "o"],
+      ["x", "c", "x"],
     ],
+    hasCollectible: true,
   },
 
-  // 22. Pickup on alternating lanes
   {
     rows: [
-      ["p", "x", "o"],
-      ["o", "p", "x"],
-      ["x", "o", "p"],
-      ["p", "x", "o"],
+      ["c", "x", "o"],
+      ["o", "c", "x"],
+      ["x", "o", "c"],
+      ["c", "x", "o"],
     ],
+    hasCollectible: true,
   },
 
-  // 23. Pickup through a central opening
   {
     rows: [
-      ["o", "p", "o"],
+      ["o", "c", "o"],
       ["o", "x", "o"],
-      ["x", "p", "x"],
+      ["x", "c", "x"],
       ["o", "x", "o"],
-      ["o", "p", "o"],
+      ["o", "c", "o"],
     ],
+    hasCollectible: true,
   },
 
-  // 24. Mixed obstacle/pickup zig-zag
   {
     rows: [
-      ["o", "p", "x"],
-      ["x", "o", "p"],
-      ["p", "x", "o"],
-      ["o", "p", "x"],
+      ["o", "c", "x"],
+      ["x", "o", "c"],
+      ["c", "x", "o"],
+      ["o", "c", "x"],
     ],
+    hasCollectible: true,
   },
 
-  // 25. Long mixed pattern
   {
     rows: [
       ["o", "x", "o"],
-      ["x", "p", "x"],
+      ["x", "c", "x"],
       ["o", "o", "x"],
-      ["x", "p", "o"],
+      ["x", "c", "o"],
       ["o", "x", "x"],
-      ["x", "o", "p"],
+      ["x", "o", "c"],
       ["o", "x", "o"],
     ],
+    hasCollectible: true,
   },
 ];

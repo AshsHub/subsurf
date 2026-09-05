@@ -6,8 +6,14 @@ import type {
   SpawnPattern,
 } from "./world/configs/SpawnConfig";
 
-export type SpawnData = { type: SpawnCell; lane: Lane; z: number };
+export type SpawnData = {
+  type: SpawnCell;
+  lane: Lane;
+  z: number;
+};
+
 type SpawnState = "idle" | "running" | "paused" | "ended";
+
 export class SpawnManager {
   public onSpawn: Subject<SpawnData> = new Subject<SpawnData>();
 
@@ -21,6 +27,7 @@ export class SpawnManager {
   private _distanceUntilNextRow = 0;
   private _timeUntilFirstSpawn = 0;
   private _consecutiveSkips = 0;
+  private _patternsWithoutCollectible = 0;
 
   constructor(patterns: readonly SpawnPattern[], config: SpawnConfig) {
     if (patterns.length === 0) {
@@ -37,10 +44,10 @@ export class SpawnManager {
     }
 
     this._state = "running";
-
     this._currentPattern = this._getRandomPattern();
     this._rowIndex = 0;
     this._consecutiveSkips = 0;
+    this._patternsWithoutCollectible = 0;
     this._timeUntilFirstSpawn = this._config.initialDelay;
     this._distanceUntilNextRow = 0;
   }
@@ -75,6 +82,7 @@ export class SpawnManager {
     this._currentPattern = null;
     this._rowIndex = 0;
     this._consecutiveSkips = 0;
+    this._patternsWithoutCollectible = 0;
     this._timeUntilFirstSpawn = 0;
     this._distanceUntilNextRow = 0;
   }
@@ -96,7 +104,6 @@ export class SpawnManager {
 
     while (this._distanceUntilNextRow <= 0) {
       this._processNextRow();
-
       this._distanceUntilNextRow += this._config.rowSpacing;
     }
   }
@@ -140,7 +147,15 @@ export class SpawnManager {
   }
 
   private _finishPattern(): void {
-    const nextPattern = this._getRandomPattern();
+    const mustHaveCollectible =
+      this._patternsWithoutCollectible + 1 >=
+      this._config.maxPatternsWithoutCollectible;
+
+    const candidates = mustHaveCollectible
+      ? this._patterns.filter((pattern) => pattern.hasCollectible)
+      : this._patterns;
+
+    const nextPattern = this._getRandomPattern(candidates);
 
     const canSkip = this._consecutiveSkips < this._config.maxConsecutiveSkips;
 
@@ -160,17 +175,24 @@ export class SpawnManager {
     this._currentPattern = nextPattern;
     this._rowIndex = 0;
     this._consecutiveSkips = 0;
+
+    if (nextPattern.hasCollectible) {
+      this._patternsWithoutCollectible = 0;
+    } else {
+      this._patternsWithoutCollectible++;
+    }
   }
 
   private _startNextPattern(): void {
     this._currentPattern = this._getRandomPattern();
-
     this._rowIndex = 0;
   }
 
-  private _getRandomPattern(): SpawnPattern {
-    const index = Math.floor(Math.random() * this._patterns.length);
+  private _getRandomPattern(
+    patterns: readonly SpawnPattern[] = this._patterns,
+  ): SpawnPattern {
+    const index = Math.floor(Math.random() * patterns.length);
 
-    return this._patterns[index];
+    return patterns[index];
   }
 }

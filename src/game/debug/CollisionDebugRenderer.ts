@@ -10,7 +10,7 @@ export class CollisionDebugRenderer {
   private readonly _boxes = new Map<Collider, Mesh3D>();
   private readonly _materials = new Map<CollisionLayer, Material>();
 
-  private _enabled = true;
+  private _enabled = false;
   private readonly _gameWorld: GameWorld;
 
   constructor(world: GameWorld, collisionManager: CollisionManager) {

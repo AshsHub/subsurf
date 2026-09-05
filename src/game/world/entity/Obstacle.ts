@@ -1,6 +1,7 @@
 import {
   Color,
   StandardMaterial,
+  StandardMaterialAlphaMode,
   StandardMaterialTexture,
   TextureTransform,
   type Mesh3D,
@@ -54,11 +55,13 @@ export abstract class Obstacle extends DynamicEntity {
 
     const laserMaterial = new StandardMaterial();
 
-    laserMaterial.baseColor = Color.fromBytes(255, 45, 80);
+    laserMaterial.baseColor = Color.fromBytes(255, 45, 80, 140);
     laserMaterial.baseColorTexture = this._laserTexture;
     laserMaterial.emissive = Color.fromBytes(255, 60, 90);
     laserMaterial.metallic = 0;
     laserMaterial.roughness = 0.05;
+    laserMaterial.alphaMode = StandardMaterialAlphaMode.blend;
+    laserMaterial.depthMask = false;
 
     this._leftSupport = Mesh3DCustom.createCube({
       material: supportMaterial,

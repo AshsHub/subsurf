@@ -6,7 +6,6 @@ import {
   TextureTransform,
 } from "pixi3d/pixi7";
 
-import { TRACK_CONFIG } from "../configs/GameConfig";
 import { Mesh3DCustom } from "../mesh/Mesh3DCustom";
 import { StaticEntity } from "./base/StaticEntity";
 
@@ -22,6 +21,10 @@ export class Track extends StaticEntity {
 
   private _scrollOffset = 0;
   private readonly _direction = -1;
+  private readonly _trackWidth = 8;
+  private readonly _trackLength = 100;
+  private readonly _trackUVRepeatX = 1;
+  private readonly _trackUVRepeatY = 5;
 
   static create(): Track {
     return new Track();
@@ -40,10 +43,10 @@ export class Track extends StaticEntity {
     this._material.baseColorTexture = this._texture;
 
     this.body = Mesh3DCustom.createPlane({
-      width: TRACK_CONFIG.width,
-      length: TRACK_CONFIG.length,
-      uvRepeatX: TRACK_CONFIG.uvRepeatX,
-      uvRepeatY: TRACK_CONFIG.uvRepeatY,
+      width: this._trackWidth,
+      length: this._trackLength,
+      uvRepeatX: this._trackUVRepeatX,
+      uvRepeatY: this._trackUVRepeatY,
       material: this._material,
     });
 
@@ -52,7 +55,7 @@ export class Track extends StaticEntity {
   }
 
   public update(deltaTime: number, speed: number): void {
-    const uvSpeed = speed * (TRACK_CONFIG.uvRepeatY / TRACK_CONFIG.length);
+    const uvSpeed = speed * (this._trackUVRepeatY / this._trackLength);
 
     this._scrollOffset += uvSpeed * deltaTime * this._direction;
     this._texture.transform!.offset.y = this._scrollOffset;
