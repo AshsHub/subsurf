@@ -10,17 +10,17 @@ const BAR_WIDTH = 150;
 const BAR_HEIGHT = 8;
 
 export class CollectionProgress extends Container {
-  private readonly background: Graphics;
-  private readonly iconBackground: Graphics;
-  private readonly icon: Graphics;
-  private readonly barBackground: Graphics;
-  private readonly barFill: Graphics;
-  private readonly valueText: Text;
+  private readonly _background: Graphics;
+  private readonly _iconBackground: Graphics;
+  private readonly _icon: Graphics;
+  private readonly _barBackground: Graphics;
+  private readonly _barFill: Graphics;
+  private readonly _valueText: Text;
 
-  private readonly target: number;
+  private _target: number;
 
-  private value = 0;
-  private displayedProgress = 0;
+  private _value = 0;
+  private _displayedProgress = 0;
 
   constructor(target: number) {
     super();
@@ -29,48 +29,48 @@ export class CollectionProgress extends Container {
       throw new Error("CollectionProgress target must be greater than zero");
     }
 
-    this.target = target;
+    this._target = target;
 
-    this.background = new Graphics()
+    this._background = new Graphics()
       .beginFill(0x18181b, 0.88)
       .drawRoundedRect(0, 0, WIDTH, HEIGHT, HEIGHT / 2)
       .endFill();
 
-    this.iconBackground = new Graphics()
+    this._iconBackground = new Graphics()
       .beginFill(0xc94f7c)
       .drawCircle(28, HEIGHT / 2, 18)
       .endFill();
 
-    this.icon = new Graphics()
+    this._icon = new Graphics()
       .beginFill(0xffd85c)
       .drawCircle(28, HEIGHT / 2, 9)
       .endFill()
       .lineStyle(2, 0xfff0a8)
       .drawCircle(28, HEIGHT / 2, 9);
 
-    this.barBackground = new Graphics()
+    this._barBackground = new Graphics()
       .beginFill(0xffffff, 0.14)
       .drawRoundedRect(BAR_X, BAR_Y, BAR_WIDTH, BAR_HEIGHT, BAR_HEIGHT / 2)
       .endFill();
 
-    this.barFill = new Graphics();
+    this._barFill = new Graphics();
 
-    this.valueText = new Text("0 / 0", {
+    this._valueText = new Text("0 / 0", {
       fill: 0xffffff,
       fontSize: 20,
       fontWeight: "700",
     });
 
-    this.valueText.anchor.set(0, 0.5);
-    this.valueText.position.set(BAR_X, 20);
+    this._valueText.anchor.set(0, 0.5);
+    this._valueText.position.set(BAR_X, 20);
 
     this.addChild(
-      this.background,
-      this.iconBackground,
-      this.icon,
-      this.barBackground,
-      this.barFill,
-      this.valueText,
+      this._background,
+      this._iconBackground,
+      this._icon,
+      this._barBackground,
+      this._barFill,
+      this._valueText,
     );
 
     this.pivot.set(WIDTH / 2, 0);
@@ -78,13 +78,22 @@ export class CollectionProgress extends Container {
     this._update();
   }
 
-  public setValue(value: number): void {
-    const nextValue = Math.max(0, Math.min(value, this.target));
+  public setTarget(target: number): void {
+    if (target <= 0) {
+      throw new Error("CollectionProgress target must be greater than zero");
+    }
 
-    this.value = nextValue;
+    this._target = target;
+    this._update();
+  }
+
+  public setValue(value: number): void {
+    const nextValue = Math.max(0, Math.min(value, this._target));
+
+    this._value = nextValue;
 
     gsap.to(this, {
-      displayedProgress: nextValue / this.target,
+      displayedProgress: nextValue / this._target,
       duration: 0.25,
       ease: "power2.out",
       overwrite: true,
@@ -93,7 +102,7 @@ export class CollectionProgress extends Container {
       },
     });
 
-    this.valueText.text = `${this.value} / ${this.target}`;
+    this._valueText.text = `${this._value} / ${this._target}`;
 
     if (nextValue > 0) {
       this._animateCollection();
@@ -115,44 +124,44 @@ export class CollectionProgress extends Container {
   }
 
   private _update(): void {
-    this.displayedProgress = this.value / this.target;
+    this._displayedProgress = this._value / this._target;
 
-    this.valueText.text = `${this.value} / ${this.target}`;
+    this._valueText.text = `${this._value} / ${this._target}`;
 
     this._updateBar();
   }
 
   private _updateBar(): void {
-    const width = BAR_WIDTH * this.displayedProgress;
+    const width = BAR_WIDTH * this._displayedProgress;
 
-    this.barFill.clear();
+    this._barFill.clear();
 
     if (width <= 0) {
       return;
     }
 
-    this.barFill
+    this._barFill
       .beginFill(0xffd85c)
       .drawRoundedRect(BAR_X, BAR_Y, width, BAR_HEIGHT, BAR_HEIGHT / 2)
       .endFill();
   }
 
   private _animateCollection(): void {
-    gsap.killTweensOf(this.iconBackground.scale);
-    gsap.killTweensOf(this.icon.scale);
+    gsap.killTweensOf(this._iconBackground.scale);
+    gsap.killTweensOf(this._icon.scale);
 
-    this.iconBackground.scale.set(1);
-    this.icon.scale.set(1);
+    this._iconBackground.scale.set(1);
+    this._icon.scale.set(1);
 
     gsap
       .timeline()
-      .to([this.iconBackground.scale, this.icon.scale], {
+      .to([this._iconBackground.scale, this._icon.scale], {
         x: 1.18,
         y: 1.18,
         duration: 0.1,
         ease: "power2.out",
       })
-      .to([this.iconBackground.scale, this.icon.scale], {
+      .to([this._iconBackground.scale, this._icon.scale], {
         x: 1,
         y: 1,
         duration: 0.2,

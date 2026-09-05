@@ -8,18 +8,23 @@ import {
   type GameStateChange,
 } from "./GameState";
 
+import { KeyboardAction, KeyboardInput } from "../input/KeyboardInput";
 import { AssetLoader } from "../loading/AssetLoader";
 import { BootFlow } from "../loading/BootFlow";
 import { GameUI } from "../ui/GameUI";
 import { HomeOverlay } from "../ui/overlay/HomeOverlay";
-import { OverlayManager } from "../ui/overlay/OverlayManager";
+import { LoseOverlay } from "../ui/overlay/LoseOverlay";
+import {
+  OverlayId,
+  OverlayManager,
+  type OverlayFactory,
+} from "../ui/overlay/OverlayManager";
 import { PauseOverlay } from "../ui/overlay/PauseOverlay";
+import { WinOverlay } from "../ui/overlay/WinOverlay";
 import { UIRoot } from "../ui/UIRoot";
-import { KeyboardInput, type KeyboardAction } from "../input/KeyboardInput";
-import { GameWorld } from "./world/GameWorld";
-import { CollisionLayer } from "./world/component/Collider";
-import { PICKUP_CONFIG } from "./world/configs/GameConfig";
 import { GameProgress } from "./GameProgress";
+import { CollisionLayer } from "./world/component/Collider";
+import { GameWorld } from "./world/GameWorld";
 
 export class GameApp {
   private _app: Application | undefined;
@@ -87,31 +92,62 @@ export class GameApp {
 
     const uiRoot = new UIRoot();
 
-    this._overlayManager = new OverlayManager(this._app, uiRoot, {
-      home: () =>
-        new HomeOverlay({
-          onRequestStart: () => {
-            this._gameState.start();
-          },
-        }),
+    const overlayFactories = new Map<OverlayId, OverlayFactory>([
+      [
+        OverlayId.Home,
+        () =>
+          new HomeOverlay({
+            onRequestStart: () => {
+              this._gameState.start();
+            },
+          }),
+      ],
+      [
+        OverlayId.Pause,
+        () =>
+          new PauseOverlay({
+            onResume: () => {
+              this._gameState.resume();
+            },
+          }),
+      ],
+      [
+        OverlayId.EndWon,
+        () =>
+          new WinOverlay({
+            onContinue: () => {
+              this._gameState.reset();
+              this._gameState.start();
+            },
+          }),
+      ],
+      [
+        OverlayId.EndLost,
+        () =>
+          new LoseOverlay({
+            onContinue: () => {
+              this._gameState.reset();
+              this._gameState.start();
+            },
+          }),
+      ],
+    ]);
 
-      pause: () =>
-        new PauseOverlay({
-          onResume: () => {
-            this._gameState.resume();
-          },
-        }),
-    });
+    this._overlayManager = new OverlayManager(
+      this._app,
+      uiRoot,
+      overlayFactories,
+    );
 
-    await this._overlayManager.goTo("home", {
-      immediate: true,
+    await this._overlayManager.goTo(OverlayId.Home, {
+      immediateTransition: true,
     });
 
     this.setupScene();
 
     this._gameUI = new GameUI(() => {
       this._gameState.pause();
-    }, PICKUP_CONFIG.pointTarget);
+    }, this._gameProgress.collectionTarget);
 
     this._gameUI.hide();
 
@@ -128,7 +164,7 @@ export class GameApp {
   }
 
   private readonly onKeyboardAction = (action: KeyboardAction): void => {
-    if (action === "pause") {
+    if (action === KeyboardAction.Pause) {
       if (this._gameState.state === GameState.Paused) {
         this._gameState.resume();
       } else if (this._gameState.state === GameState.Playing) {
@@ -163,7 +199,7 @@ export class GameApp {
     const collections = this._gameProgress.addCollection();
     this._gameUI.setCollections(collections);
 
-    if (collections >= PICKUP_CONFIG.pointTarget) {
+    if (collections >= this._gameProgress.collectionTarget) {
       this._gameState.end(GameResult.Won);
     }
   }
@@ -176,6 +212,7 @@ export class GameApp {
   private readonly _onGameStateChange = ({
     from,
     to,
+    result,
   }: GameStateChange): void => {
     switch (to) {
       case GameState.Playing:
@@ -192,13 +229,22 @@ export class GameApp {
 
       case GameState.Paused:
         this._gameWorld.pause();
-        void this._overlayManager.goTo("pause");
+        void this._overlayManager.goTo(OverlayId.Pause);
         this._gameUI.hide();
         break;
 
       case GameState.Ended:
         this._gameWorld.end();
         this._gameUI.hide();
+        void this._overlayManager.goTo(
+          result === GameResult.Won ? OverlayId.EndWon : OverlayId.EndLost,
+          {
+            meta: {
+              score: this._gameProgress.collections,
+              target: this._gameProgress.collectionTarget,
+            },
+          },
+        );
         break;
 
       case GameState.Idle:

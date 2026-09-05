@@ -7,7 +7,7 @@ import {
 } from "pixi3d/pixi7";
 import { Assets } from "pixi.js";
 
-import { type KeyboardAction } from "../../input/KeyboardInput";
+import { KeyboardAction } from "../../input/KeyboardInput";
 import {
   CollisionManager,
   type CollisionHandler,
@@ -109,15 +109,13 @@ export class GameWorld extends Container3D {
 
   public onKeyboardAction(action: KeyboardAction): void {
     switch (action) {
-      case "left":
+      case KeyboardAction.MoveLeft:
         this._player.moveLeft();
         break;
-
-      case "right":
+      case KeyboardAction.MoveRight:
         this._player.moveRight();
         break;
-
-      case "jump":
+      case KeyboardAction.Jump:
         this._player.jump();
         break;
     }

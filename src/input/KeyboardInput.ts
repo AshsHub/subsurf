@@ -1,4 +1,9 @@
-export type KeyboardAction = "pause" | "left" | "right" | "jump";
+export enum KeyboardAction {
+  Pause,
+  MoveLeft,
+  MoveRight,
+  Jump,
+}
 
 export class KeyboardInput {
   private readonly _listeners = new Set<(action: KeyboardAction) => void>();
@@ -26,22 +31,22 @@ export class KeyboardInput {
     switch (event.code) {
       case "ArrowLeft":
       case "KeyA":
-        action = "left";
+        action = KeyboardAction.MoveLeft;
         break;
 
       case "ArrowRight":
       case "KeyD":
-        action = "right";
+        action = KeyboardAction.MoveRight;
         break;
 
       case "Space":
       case "ArrowUp":
-        action = "jump";
+        action = KeyboardAction.Jump;
         break;
 
       case "Escape":
       case "KeyP":
-        action = "pause";
+        action = KeyboardAction.Pause;
         break;
     }
 

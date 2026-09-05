@@ -4,6 +4,7 @@ export enum GameState {
   Paused,
   Ended,
 }
+
 export enum GameResult {
   Won,
   Lost,
@@ -20,15 +21,19 @@ export class GameStateManager {
   private _state: GameState = GameState.Idle;
   private _result: GameResultOrNull = null;
   private readonly _listeners = new Set<(change: GameStateChange) => void>();
+
   public get state(): GameState {
     return this._state;
   }
+
   public get result(): GameResultOrNull {
     return this._result;
   }
+
   public onChange(listener: (change: GameStateChange) => void): void {
     this._listeners.add(listener);
   }
+
   public start(): void {
     if (this._state !== GameState.Idle) {
       return;
@@ -36,18 +41,21 @@ export class GameStateManager {
     this._result = null;
     this._changeState(GameState.Playing);
   }
+
   public pause(): void {
     if (this._state !== GameState.Playing) {
       return;
     }
     this._changeState(GameState.Paused);
   }
+
   public resume(): void {
     if (this._state !== GameState.Paused) {
       return;
     }
     this._changeState(GameState.Playing);
   }
+
   public end(result: Exclude<GameResult, null>): void {
     if (this._state !== GameState.Playing && this._state !== GameState.Paused) {
       return;
@@ -55,6 +63,7 @@ export class GameStateManager {
     this._result = result;
     this._changeState(GameState.Ended);
   }
+
   public reset(): void {
     this._result = null;
     this._changeState(GameState.Idle);

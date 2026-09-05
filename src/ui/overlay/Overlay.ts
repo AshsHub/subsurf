@@ -1,7 +1,10 @@
 import type { Application, Container } from "pixi.js";
 
 export interface Overlay extends Container {
-  onEnter?(app: Application): void | Promise<void>;
+  onEnter?(
+    app: Application,
+    meta?: Record<string, unknown>,
+  ): void | Promise<void>;
   onExit?(): void | Promise<void>;
   onResize?(width: number, height: number): void;
 
