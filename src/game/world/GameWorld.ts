@@ -28,6 +28,7 @@ import { PATTERNS, SPAWN_CONFIG, type SpawnCell } from "./configs/SpawnConfig";
 import type { WorldEntity } from "./entity/base/WorldEntity";
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
+import type { Collectible } from "./entity/Collectible";
 
 export class GameWorld extends Container3D {
   public onHitObstacle: Subject<void> = new Subject<void>();
@@ -131,14 +132,18 @@ export class GameWorld extends Container3D {
   }
 
   private _handleCollision(collision: CollisionResult): void {
-    switch (collision.collider.layer) {
+    const { collider } = collision;
+    switch (collider.layer) {
       case CollisionLayer.Collectible:
         this.onScored.next();
-        this._entityManager.remove(collision.collider.entity);
+        collider.enabled = false;
+        (collider.entity as Collectible).collect(() => {
+          this._entityManager.remove(collider.entity);
+        });
         break;
       case CollisionLayer.Obstacle:
         if (collision.side !== CollisionSide.Back) {
-          collision.collider.enabled = false;
+          collider.enabled = false;
           this._reduceSpeed(GAME_SPEED.sideCollisionPenalty);
         } else {
           this.onHitObstacle.next();
