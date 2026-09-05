@@ -1,3 +1,4 @@
+import { Assets, WRAP_MODES } from "pixi.js";
 import {
   Color,
   Container3D,
@@ -18,13 +19,13 @@ import {
 } from "../configs/LaneConfig";
 import { Mesh3DCustom } from "../mesh/Mesh3DCustom";
 import { DynamicEntity } from "./base/DynamicEntity";
-import { Assets, WRAP_MODES } from "pixi.js";
 
-const DEFAULT_ENGINE_COLOR = [255, 40, 40];
-const ENGINE_LIGHT_INTENSITY = 0.35;
+const DEFAULT_ENGINE_COLOR = [40, 40, 225];
+const ENGINE_LIGHT_INTENSITY = 0.25;
 
 export class Player extends DynamicEntity {
   private readonly ufo: Container3D;
+
   private _body!: Mesh3D;
   private _cockpit!: Mesh3D;
   private _engine!: Mesh3D;
@@ -33,27 +34,35 @@ export class Player extends DynamicEntity {
   private _engineMaterial!: StandardMaterial;
   private _engineMaterialTexture!: StandardMaterialTexture;
   private _engineTextureTransform!: TextureTransform;
+
   private readonly _engineColor = Color.from(DEFAULT_ENGINE_COLOR);
   private readonly _engineEmissiveColor = Color.from(DEFAULT_ENGINE_COLOR);
   private readonly _engineLightColor = Color.from(DEFAULT_ENGINE_COLOR);
 
   private _engineScroll = 0;
+  private _engineLightTime = 0;
+
+  private readonly _engineBaseScale = {
+    x: 0.25,
+    y: 0.5,
+    z: 0.25,
+  };
+
+  private readonly _ufoRotation = {
+    x: -5,
+    y: 0,
+    z: 0,
+  };
+  private _bodySpin = { y: 0 };
 
   private lane: Lane = STARTING_LANE;
-
   private readonly groundY = 0;
-
   private airborne = false;
-  private jumpTime = 0;
-  private _engineLightTime = 0;
 
   private readonly jumpHeight = 1.5;
   private readonly jumpDuration = 0.65;
 
-  private laneStartX = 0;
-  private laneTargetX = 0;
-  private laneMoveTime = 0;
-  private laneMoveDuration = 0.2;
+  private readonly laneMoveDuration = 0.2;
   private laneMoving = false;
 
   static create(): Player {
@@ -63,11 +72,14 @@ export class Player extends DynamicEntity {
   constructor() {
     super();
 
+    this.setAnimationController();
+
     this.ufo = new Container3D();
 
     this.visual.addChild(this.ufo);
 
     this._craftUFO();
+    this._startIdleAnimation();
 
     this.setCollider({
       width: 1,
@@ -80,6 +92,7 @@ export class Player extends DynamicEntity {
 
   private _craftUFO(): void {
     //! Body
+
     const bodyTexture = Assets.get("player-body-texture");
 
     if (!bodyTexture) {
@@ -134,8 +147,6 @@ export class Player extends DynamicEntity {
     cockpitMaterial.baseColorTexture = cockpitMaterialTexture;
     cockpitMaterial.metallic = 0.65;
     cockpitMaterial.roughness = 0.15;
-    cockpitMaterial.emissive = Color.fromBytes(0, 15, 25);
-
     cockpitMaterial.emissive = Color.fromBytes(0, 8, 12);
 
     this._cockpit = Mesh3DCustom.createSphere({
@@ -155,9 +166,6 @@ export class Player extends DynamicEntity {
     this._engineMaterial.baseColor = this._engineColor;
     this._engineMaterial.emissive = this._engineEmissiveColor;
 
-    this._engineMaterial.metallic = 0.1;
-    this._engineMaterial.roughness = 0.18;
-
     const engineTexture = Assets.get("player-engine-texture");
 
     if (!engineTexture) {
@@ -173,20 +181,23 @@ export class Player extends DynamicEntity {
     );
 
     this._engineTextureTransform = new TextureTransform();
-
     this._engineMaterialTexture.transform = this._engineTextureTransform;
-
     this._engineMaterial.baseColorTexture = this._engineMaterialTexture;
 
-    this._engine = Mesh3DCustom.createCylinder({
+    this._engine = Mesh3DCustom.createSphere({
       radius: 0.5,
-      height: 1,
-      segments: 24,
       material: this._engineMaterial,
     });
 
-    this._engine.scale.set(0.25, 0.5, 0.25);
-    this._engine.position.set(0, 0.25, 0);
+    this._engine.scale.set(
+      this._engineBaseScale.x,
+      this._engineBaseScale.y,
+      this._engineBaseScale.z,
+    );
+
+    this._engine.position.set(0, 0.4, 0);
+
+    //! Engine light
 
     this._engineLight = new Light();
 
@@ -204,23 +215,25 @@ export class Player extends DynamicEntity {
       this._engineLight,
     );
 
-    this.ufo.rotationQuaternion.setEulerAngles(-5, 0, 0);
+    this._applyUfoRotation();
   }
 
   moveLeft(): void {
-    if (this.lane <= 0) {
+    if (this.lane <= 0 || this.laneMoving) {
       return;
     }
 
     this.setLane((this.lane - 1) as Lane);
+    this._animateLaneChange(-1);
   }
 
   moveRight(): void {
-    if (this.lane >= LANE_POSITIONS.length - 1) {
+    if (this.lane >= LANE_POSITIONS.length - 1 || this.laneMoving) {
       return;
     }
 
     this.setLane((this.lane + 1) as Lane);
+    this._animateLaneChange(1);
   }
 
   jump(): void {
@@ -229,7 +242,7 @@ export class Player extends DynamicEntity {
     }
 
     this.airborne = true;
-    this.jumpTime = 0;
+    this._animateJump();
   }
 
   get currentLane(): Lane {
@@ -241,49 +254,161 @@ export class Player extends DynamicEntity {
   }
 
   public update(dt: number): void {
-    this._updateLaneMovement(dt);
-    this._updateJump(dt);
     this._updateEngineLight(dt);
     this._updateEngineTexture(dt);
   }
 
-  private _updateLaneMovement(dt: number): void {
-    if (!this.laneMoving) {
-      return;
-    }
+  private _startIdleAnimation(): void {
+    const controller = this.animationController!;
 
-    this.laneMoveTime += dt;
+    controller.to(this.ufo.position, {
+      y: 0.04,
+      duration: 0.8,
+      yoyo: true,
+      repeat: -1,
+      ease: "sine.inOut",
+    });
 
-    const progress = Math.min(this.laneMoveTime / this.laneMoveDuration, 1);
+    controller.to(this._ufoRotation, {
+      x: -3.5,
+      duration: 1.2,
+      yoyo: true,
+      repeat: -1,
+      ease: "sine.inOut",
+      onUpdate: () => {
+        this._applyUfoRotation();
+      },
+    });
 
-    const easedProgress = this._easeOut(progress);
-
-    this.position.x =
-      this.laneStartX + (this.laneTargetX - this.laneStartX) * easedProgress;
-
-    if (progress >= 1) {
-      this.position.x = this.laneTargetX;
-      this.laneMoving = false;
-    }
+    // Rotating body
+    controller.to(this._bodySpin, {
+      y: 360,
+      duration: 3,
+      repeat: -1,
+      ease: "none",
+      onUpdate: () => {
+        this._body.rotationQuaternion.setEulerAngles(
+          0,
+          this._bodySpin.y % 360,
+          0,
+        );
+      },
+    });
   }
 
-  private _updateJump(dt: number): void {
-    if (!this.airborne) {
-      return;
-    }
+  private setLane(lane: Lane): void {
+    this.lane = lane;
+    this.laneMoving = true;
 
-    this.jumpTime += dt;
+    this.animationController!.to(this.position, {
+      x: LANE_POSITIONS[lane],
+      duration: this.laneMoveDuration,
+      ease: "power2.out",
+      onComplete: () => {
+        this.position.x = LANE_POSITIONS[lane];
+        this.laneMoving = false;
+      },
+    });
+  }
 
-    const progress = Math.min(this.jumpTime / this.jumpDuration, 1);
+  private _animateLaneChange(direction: -1 | 1): void {
+    const controller = this.animationController!;
 
-    this.position.y =
-      this.groundY + Math.sin(progress * Math.PI) * this.jumpHeight;
+    controller.to(this._ufoRotation, {
+      z: direction * -12,
+      duration: 0.1,
+      ease: "power2.out",
+      onUpdate: () => {
+        this._applyUfoRotation();
+      },
+    });
 
-    if (progress >= 1) {
-      this.airborne = false;
-      this.jumpTime = 0;
-      this.position.y = this.groundY;
-    }
+    controller.to(this._ufoRotation, {
+      z: 0,
+      duration: 0.18,
+      delay: 0.1,
+      ease: "back.out(2)",
+      onUpdate: () => {
+        this._applyUfoRotation();
+      },
+    });
+  }
+
+  private _animateJump(): void {
+    const controller = this.animationController!;
+
+    const jump = {
+      progress: 0,
+    };
+
+    // UFO movement
+
+    controller.to(jump, {
+      progress: 1,
+      duration: this.jumpDuration,
+      ease: "none",
+
+      onUpdate: () => {
+        this.position.y =
+          this.groundY + Math.sin(jump.progress * Math.PI) * this.jumpHeight;
+      },
+
+      onComplete: () => {
+        this.position.y = this.groundY;
+        this.airborne = false;
+      },
+    });
+
+    // Engine thrust burst
+
+    controller.to(this._engine.scale, {
+      x: 0.4,
+      z: 0.4,
+      y: 0.65,
+      duration: 0.1,
+      ease: "power2.out",
+    });
+
+    // Pull the engine back slightly while the UFO is airborne.
+    controller.to(this._engine.scale, {
+      x: 0.3,
+      z: 0.3,
+      y: 0.56,
+      duration: 0.25,
+      delay: 0.1,
+      ease: "power2.out",
+    });
+
+    // Return to the normal engine size near the end of the jump.
+    controller.to(this._engine.scale, {
+      x: this._engineBaseScale.x,
+      z: this._engineBaseScale.z,
+      y: this._engineBaseScale.y,
+      duration: 0.25,
+      delay: 0.35,
+      ease: "power2.inOut",
+    });
+
+    // Small body tilt during takeoff
+
+    controller.to(this._ufoRotation, {
+      x: -10,
+      duration: 0.12,
+      ease: "power2.out",
+      onUpdate: () => {
+        this._applyUfoRotation();
+      },
+    });
+
+    controller.to(this._ufoRotation, {
+      x: -5,
+      duration: 0.3,
+      delay: 0.12,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        this._applyUfoRotation();
+      },
+    });
   }
 
   private _updateEngineLight(dt: number): void {
@@ -299,30 +424,26 @@ export class Player extends DynamicEntity {
   private _updateEngineTexture(dt: number): void {
     this._engineScroll += dt * 2.5;
 
-    this._engineTextureTransform.offset.y = (this._engineScroll % 1) * -1;
+    this._engineTextureTransform.offset.y = this._engineScroll % 1;
   }
 
-  private setLane(lane: Lane): void {
-    this.lane = lane;
-
-    this.laneStartX = this.position.x;
-    this.laneTargetX = LANE_POSITIONS[lane];
-    this.laneMoveTime = 0;
-    this.laneMoving = true;
+  private _applyUfoRotation(): void {
+    this.ufo.rotationQuaternion.setEulerAngles(
+      this._ufoRotation.x,
+      this._ufoRotation.y,
+      this._ufoRotation.z,
+    );
   }
 
   public reset(): void {
+    this.animationController?.kill();
     this.lane = STARTING_LANE;
 
     this.position.x = LANE_POSITIONS[STARTING_LANE];
     this.position.y = this.groundY;
+    this.ufo.position.set(0, 0, 0);
 
     this.airborne = false;
-    this.jumpTime = 0;
-
-    this.laneStartX = this.position.x;
-    this.laneTargetX = this.position.x;
-    this.laneMoveTime = 0;
     this.laneMoving = false;
 
     this._engineLightTime = 0;
@@ -330,14 +451,25 @@ export class Player extends DynamicEntity {
 
     this._engineLight.intensity = ENGINE_LIGHT_INTENSITY;
     this._engineTextureTransform.offset.y = 0;
+
+    this._engine.scale.set(
+      this._engineBaseScale.x,
+      this._engineBaseScale.y,
+      this._engineBaseScale.z,
+    );
+
+    this._ufoRotation.x = -5;
+    this._ufoRotation.y = 0;
+    this._ufoRotation.z = 0;
+
+    this._bodySpin.y = 0;
+
+    this._applyUfoRotation();
+    this._startIdleAnimation();
   }
 
   override destroyEntity(): void {
     this.reset();
     super.destroyEntity();
-  }
-
-  private _easeOut(t: number): number {
-    return 1 - Math.pow(1 - t, 2);
   }
 }
