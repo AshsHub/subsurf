@@ -23,6 +23,13 @@ export class AnimationController {
     return animation;
   }
 
+  public timeline(vars?: gsap.TimelineVars): gsap.core.Timeline {
+    const timeline = gsap.timeline(vars);
+    this._animations.add(timeline);
+
+    return timeline;
+  }
+
   public pause(): void {
     for (const animation of this._animations) {
       animation.pause();

@@ -313,9 +313,10 @@ export class Player extends DynamicEntity {
 
   private _animateLaneChange(direction: -1 | 1): void {
     const controller = this.animationController!;
+    const timeline = controller.timeline();
 
-    controller.to(this._ufoRotation, {
-      z: direction * -12,
+    timeline.to(this._ufoRotation, {
+      z: direction * -14,
       duration: 0.1,
       ease: "power2.out",
       onUpdate: () => {
@@ -323,91 +324,208 @@ export class Player extends DynamicEntity {
       },
     });
 
-    controller.to(this._ufoRotation, {
-      z: 0,
-      duration: 0.18,
-      delay: 0.1,
-      ease: "back.out(2)",
-      onUpdate: () => {
-        this._applyUfoRotation();
+    timeline.to(
+      this.visual.scale,
+      {
+        x: 1.06,
+        y: 0.94,
+        z: 1.06,
+        duration: 0.1,
+        ease: "power2.out",
       },
-    });
+      0,
+    );
+
+    timeline.to(
+      this._ufoRotation,
+      {
+        z: direction * 4,
+        duration: 0.14,
+        ease: "back.out(2)",
+        onUpdate: () => {
+          this._applyUfoRotation();
+        },
+      },
+      0.1,
+    );
+
+    timeline.to(
+      this.visual.scale,
+      {
+        x: 0.98,
+        y: 1.03,
+        z: 0.98,
+        duration: 0.12,
+        ease: "sine.out",
+      },
+      0.1,
+    );
+
+    timeline.to(
+      this._ufoRotation,
+      {
+        z: 0,
+        duration: 0.14,
+        ease: "sine.out",
+        onUpdate: () => {
+          this._applyUfoRotation();
+        },
+      },
+      0.24,
+    );
+
+    timeline.to(
+      this.visual.scale,
+      {
+        x: 1,
+        y: 1,
+        z: 1,
+        duration: 0.12,
+        ease: "sine.out",
+      },
+      0.22,
+    );
   }
 
   private _animateJump(): void {
     const controller = this.animationController!;
+    const timeline = controller.timeline();
 
     const jump = {
       progress: 0,
     };
 
-    // UFO movement
-
     controller.to(jump, {
       progress: 1,
       duration: this.jumpDuration,
       ease: "none",
-
       onUpdate: () => {
         this.position.y =
           this.groundY + Math.sin(jump.progress * Math.PI) * this.jumpHeight;
       },
-
       onComplete: () => {
         this.position.y = this.groundY;
         this.airborne = false;
+        this._animateLanding();
       },
     });
 
-    // Engine thrust burst
+    timeline.to(this.visual.scale, {
+      x: 0.92,
+      y: 0.82,
+      z: 0.92,
+      duration: 0.08,
+      ease: "power2.in",
+    });
 
-    controller.to(this._engine.scale, {
-      x: 0.4,
-      z: 0.4,
-      y: 0.65,
-      duration: 0.1,
+    timeline.to(this.visual.scale, {
+      x: 0.88,
+      y: 1.12,
+      z: 0.88,
+      duration: 0.14,
       ease: "power2.out",
     });
 
-    // Pull the engine back slightly while the UFO is airborne.
-    controller.to(this._engine.scale, {
+    timeline.to(this.visual.scale, {
+      x: 1,
+      y: 1,
+      z: 1,
+      duration: 0.18,
+      ease: "sine.out",
+    });
+
+    timeline.to(this.visual.scale, {
+      x: 1.04,
+      y: 0.96,
+      z: 1.04,
+      duration: 0.18,
+      ease: "sine.inOut",
+      yoyo: true,
+      repeat: 1,
+    });
+
+    timeline.to(
+      this._engine.scale,
+      {
+        x: 0.4,
+        y: 0.65,
+        z: 0.4,
+        duration: 0.1,
+        ease: "power2.out",
+      },
+      0,
+    );
+
+    timeline.to(this._engine.scale, {
       x: 0.3,
-      z: 0.3,
       y: 0.56,
+      z: 0.3,
       duration: 0.25,
-      delay: 0.1,
       ease: "power2.out",
+      delay: 0.1,
     });
 
-    // Return to the normal engine size near the end of the jump.
-    controller.to(this._engine.scale, {
+    timeline.to(this._engine.scale, {
       x: this._engineBaseScale.x,
-      z: this._engineBaseScale.z,
       y: this._engineBaseScale.y,
+      z: this._engineBaseScale.z,
       duration: 0.25,
-      delay: 0.35,
       ease: "power2.inOut",
     });
 
-    // Small body tilt during takeoff
+    timeline.to(
+      this._ufoRotation,
+      {
+        x: -10,
+        duration: 0.12,
+        ease: "power2.out",
+        onUpdate: () => {
+          this._applyUfoRotation();
+        },
+      },
+      0,
+    );
 
-    controller.to(this._ufoRotation, {
-      x: -10,
+    timeline.to(
+      this._ufoRotation,
+      {
+        x: -5,
+        duration: 0.3,
+        ease: "power2.inOut",
+        onUpdate: () => {
+          this._applyUfoRotation();
+        },
+      },
+      0.12,
+    );
+  }
+
+  private _animateLanding(): void {
+    const controller = this.animationController!;
+    const timeline = controller.timeline();
+
+    timeline.to(this.visual.scale, {
+      x: 1.2,
+      y: 0.7,
+      z: 1.2,
+      duration: 0.1,
+      ease: "power3.out",
+    });
+
+    timeline.to(this.visual.scale, {
+      x: 0.95,
+      y: 1.06,
+      z: 0.95,
       duration: 0.12,
       ease: "power2.out",
-      onUpdate: () => {
-        this._applyUfoRotation();
-      },
     });
 
-    controller.to(this._ufoRotation, {
-      x: -5,
-      duration: 0.3,
-      delay: 0.12,
-      ease: "power2.inOut",
-      onUpdate: () => {
-        this._applyUfoRotation();
-      },
+    timeline.to(this.visual.scale, {
+      x: 1,
+      y: 1,
+      z: 1,
+      duration: 0.18,
+      ease: "back.out(2)",
     });
   }
 
