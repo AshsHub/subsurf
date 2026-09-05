@@ -57,13 +57,11 @@ export class CollisionManager {
   private _canCollide(a: Collider, b: Collider): boolean {
     return (
       (a.layer === CollisionLayer.Player &&
-        b.layer === CollisionLayer.Obstacle) ||
-      (a.layer === CollisionLayer.Obstacle &&
-        b.layer === CollisionLayer.Player) ||
-      (a.layer === CollisionLayer.Player &&
-        b.layer === CollisionLayer.Collectible) ||
-      (a.layer === CollisionLayer.Collectible &&
-        b.layer === CollisionLayer.Player)
+        [CollisionLayer.Obstacle, CollisionLayer.Collectible].includes(
+          b.layer,
+        )) ||
+      (b.layer === CollisionLayer.Player &&
+        [CollisionLayer.Obstacle, CollisionLayer.Collectible].includes(a.layer))
     );
   }
 

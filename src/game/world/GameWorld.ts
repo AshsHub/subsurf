@@ -19,6 +19,7 @@ import { PATTERNS, SPAWN_CONFIG, type SpawnCell } from "./configs/SpawnConfig";
 import type { WorldEntity } from "./entity/base/WorldEntity";
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
+import { CollisionLayer } from "./component/Collider";
 
 export class GameWorld extends Container3D {
   private readonly _entityManager = new EntityManager();
@@ -44,7 +45,10 @@ export class GameWorld extends Container3D {
   constructor(onCollision?: CollisionHandler) {
     super();
 
-    this._collisionManager = new CollisionManager(onCollision);
+    this._collisionManager = new CollisionManager((player, collider) => {
+      onCollision?.(player, collider);
+      this._handleCollision(player, collider);
+    });
     this._collisionDebug = new CollisionDebugRenderer(
       this,
       this._collisionManager,
@@ -131,17 +135,25 @@ export class GameWorld extends Container3D {
     super.destroy();
   }
 
+  private readonly _handleCollision: CollisionHandler = (
+    player,
+    collider,
+  ): void => {
+    switch (collider.layer) {
+      case CollisionLayer.Collectible:
+        this._entityManager.remove(collider.entity);
+        break;
+    }
+  };
+
   private _spawn(type: SpawnCell, lane: Lane, z: number): void {
     if (type === "x") {
       return;
     }
 
     const poolId = type === "o" ? POOL_ID.obstacle : POOL_ID.collectible;
-
     const spawnedEntity: WorldEntity = this._entityManager.create(poolId);
-
     spawnedEntity.spawn(lane, z);
-
     this._entityManager.add(spawnedEntity, true);
   }
 

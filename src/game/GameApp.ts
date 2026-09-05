@@ -19,6 +19,7 @@ import { KeyboardInput, type KeyboardAction } from "../input/KeyboardInput";
 import { GameWorld } from "./world/GameWorld";
 import { CollisionLayer } from "./world/component/Collider";
 import { PICKUP_CONFIG } from "./world/configs/GameConfig";
+import { GameProgress } from "./GameProgress";
 
 export class GameApp {
   private _app: Application | undefined;
@@ -27,17 +28,15 @@ export class GameApp {
   private _overlayManager!: OverlayManager;
 
   private readonly _gameState = new GameStateManager();
-
   private readonly _assetLoader = new AssetLoader();
-
   private readonly _keyboard = new KeyboardInput();
-
+  private readonly _gameProgress = new GameProgress();
   private readonly _gameWorld: GameWorld;
 
   constructor() {
     this._gameWorld = new GameWorld((_player, collider) => {
       if (collider.layer === CollisionLayer.Collectible) {
-        // Collection handling goes here.
+        this.addCollection();
       } else if (collider.layer === CollisionLayer.Obstacle) {
         this._gameState.end(GameResult.Lost);
       }
@@ -157,6 +156,16 @@ export class GameApp {
     const control = new CameraOrbitControl(this._app.view as HTMLCanvasElement);
 
     control.angles.x = 25;
+  }
+
+  private addCollection(): void {
+    const collections = this._gameProgress.addCollection();
+    this._gameUI.setCollections(collections);
+  }
+
+  private resetGameProgress(): void {
+    this._gameProgress.reset();
+    this._gameUI.reset();
   }
 
   private readonly _onGameStateChange = ({

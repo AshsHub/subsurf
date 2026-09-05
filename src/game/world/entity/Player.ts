@@ -1,17 +1,16 @@
 import { Mesh3D } from "pixi3d/pixi7";
 
-import { DynamicEntity } from "./base/DynamicEntity";
+import { CollisionLayer } from "../component/Collider";
+import { PLAYER_CONFIG } from "../configs/GameConfig";
 import {
   LANE_POSITIONS,
   STARTING_LANE,
   type Lane,
 } from "../configs/LaneConfig";
-import { PLAYER_CONFIG } from "../configs/GameConfig";
 import { Mesh3DCustom } from "../mesh/Mesh3DCustom";
+import { DynamicEntity } from "./base/DynamicEntity";
 
 export class Player extends DynamicEntity {
-  static readonly poolId = "player";
-
   readonly body: Mesh3D;
 
   private lane: Lane = STARTING_LANE;
@@ -47,7 +46,7 @@ export class Player extends DynamicEntity {
 
     this.setCollider({
       ...body,
-      layer: "player",
+      layer: CollisionLayer.Player,
       offsetY: body.height / 2,
     });
   }

@@ -4,7 +4,7 @@ import type { Lane } from "../../configs/LaneConfig";
 import type { POOL_ID } from "../../../EntityPool";
 
 export abstract class WorldEntity extends Container3D {
-  public abstract readonly poolId: POOL_ID;
+  public abstract readonly poolId: POOL_ID | null;
   protected _shouldUpdate = false;
   private _entityDestroyed = false;
   private _active = true;

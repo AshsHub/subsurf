@@ -1,14 +1,14 @@
 import { Material, Mesh3D } from "pixi3d/pixi7";
 import { ColliderDebugMaterial } from "../../rendering/materials/collisionDebug/ColliderDebugMaterial";
 import type { CollisionManager } from "../CollisionManager";
-import type { Collider, CollisionLayer } from "../world/component/Collider";
+import { CollisionLayer, type Collider } from "../world/component/Collider";
 import type { GameWorld } from "../world/GameWorld";
 import { Mesh3DCustom } from "../world/mesh/Mesh3DCustom";
 
 export class CollisionDebugRenderer {
   private readonly _collisionManager: CollisionManager;
   private readonly _boxes = new Map<Collider, Mesh3D>();
-  private readonly _materials = new Map<string, Material>();
+  private readonly _materials = new Map<CollisionLayer, Material>();
 
   private _enabled = true;
   private readonly _gameWorld: GameWorld;
@@ -81,9 +81,9 @@ export class CollisionDebugRenderer {
 
   private _getColor(layer: CollisionLayer): number {
     switch (layer) {
-      case "player":
+      case CollisionLayer.Player:
         return 0x00ff00;
-      case "obstacle":
+      case CollisionLayer.Obstacle:
         return 0xff0000;
       default:
         return 0xffffff;
@@ -91,14 +91,15 @@ export class CollisionDebugRenderer {
   }
 
   private _registerMaterial(): void {
-    const playerColiderMaterial = new ColliderDebugMaterial();
-    playerColiderMaterial.color = this._getColor("player");
-
-    const obstacleColiderMaterial = new ColliderDebugMaterial();
-    obstacleColiderMaterial.color = this._getColor("obstacle");
-
-    this._materials.set("player", playerColiderMaterial);
-    this._materials.set("obstacle", obstacleColiderMaterial);
+    for (const layer of [
+      CollisionLayer.Player,
+      CollisionLayer.Obstacle,
+      CollisionLayer.Collectible,
+    ]) {
+      const m = new ColliderDebugMaterial();
+      m.color = this._getColor(layer);
+      this._materials.set(layer, m);
+    }
   }
 
   public destroy(): void {
