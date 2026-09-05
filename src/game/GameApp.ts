@@ -23,7 +23,6 @@ import { PauseOverlay } from "../ui/overlay/PauseOverlay";
 import { WinOverlay } from "../ui/overlay/WinOverlay";
 import { UIRoot } from "../ui/UIRoot";
 import { GameProgress } from "./GameProgress";
-import { CollisionLayer } from "./world/component/Collider";
 import { GameWorld } from "./world/GameWorld";
 
 export class GameApp {
@@ -40,13 +39,14 @@ export class GameApp {
   private readonly _gameWorld: GameWorld;
 
   constructor() {
-    this._gameWorld = new GameWorld((collision) => {
-      const { collider } = collision;
-      if (collider.layer === CollisionLayer.Collectible) {
-        this.addCollection();
-      } else if (collider.layer === CollisionLayer.Obstacle) {
-        this._gameState.end(GameResult.Lost);
-      }
+    this._gameWorld = new GameWorld();
+
+    this._gameWorld.onHitObstacle.subscribe((side) => {
+      this._gameState.end(GameResult.Lost);
+    });
+
+    this._gameWorld.onScored.subscribe(() => {
+      this.addPoint();
     });
 
     this._gameState.onChange((stateChange) => {
@@ -181,7 +181,7 @@ export class GameApp {
     control.angles.x = 25;
   }
 
-  private addCollection(): void {
+  private addPoint(): void {
     const collections = this._gameProgress.addCollection();
     this._gameUI.setCollections(collections);
 

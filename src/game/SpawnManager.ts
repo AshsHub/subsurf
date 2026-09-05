@@ -1,3 +1,4 @@
+import { Subject } from "rxjs";
 import type { Lane } from "./world/configs/LaneConfig";
 import type {
   SpawnCell,
@@ -5,13 +6,13 @@ import type {
   SpawnPattern,
 } from "./world/configs/SpawnConfig";
 
+export type SpawnData = { type: SpawnCell; lane: Lane; z: number };
 type SpawnState = "idle" | "running" | "paused" | "ended";
-
 export class SpawnManager {
+  public onSpawn: Subject<SpawnData> = new Subject<SpawnData>();
+
   private readonly _patterns: readonly SpawnPattern[];
   private readonly _config: SpawnConfig;
-
-  private readonly _spawn: (type: SpawnCell, lane: Lane, z: number) => void;
 
   private _state: SpawnState = "idle";
 
@@ -21,18 +22,13 @@ export class SpawnManager {
   private _timeUntilFirstSpawn = 0;
   private _consecutiveSkips = 0;
 
-  constructor(
-    patterns: readonly SpawnPattern[],
-    config: SpawnConfig,
-    spawn: (type: SpawnCell, lane: Lane, z: number) => void,
-  ) {
+  constructor(patterns: readonly SpawnPattern[], config: SpawnConfig) {
     if (patterns.length === 0) {
       throw new Error("SpawnManager requires at least one pattern");
     }
 
     this._patterns = patterns;
     this._config = config;
-    this._spawn = spawn;
   }
 
   public start(): void {
@@ -135,7 +131,11 @@ export class SpawnManager {
         continue;
       }
 
-      this._spawn(cell, lane as Lane, this._config.spawnZ);
+      this.onSpawn.next({
+        type: cell,
+        lane: lane as Lane,
+        z: this._config.spawnZ,
+      });
     }
   }
 

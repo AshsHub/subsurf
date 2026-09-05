@@ -2,12 +2,14 @@ export interface GameSpeedConfig {
   initial: number;
   maximum: number;
   acceleration: number;
+  sideCollisionPenalty: number;
 }
 
 export const GAME_SPEED: GameSpeedConfig = {
   initial: 5,
   maximum: 25,
   acceleration: 0.5,
+  sideCollisionPenalty: 5,
 };
 
 export const PICKUP_CONFIG = {

@@ -19,6 +19,7 @@
   "dependencies": {
     "gsap": "^3.15.0",
     "pixi.js": "7.4.2",
-    "pixi3d": "2.5.0"
+    "pixi3d": "2.5.0",
+    "rxjs": "^7.8.2"
   }
 }

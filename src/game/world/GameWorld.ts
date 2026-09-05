@@ -1,3 +1,4 @@
+import { Assets } from "pixi.js";
 import {
   Container3D,
   Cubemap,
@@ -5,38 +6,33 @@ import {
   LightingEnvironment,
   Skybox,
 } from "pixi3d/pixi7";
-import { Assets } from "pixi.js";
 
+import { Subject } from "rxjs";
 import { KeyboardAction } from "../../input/KeyboardInput";
 import {
   CollisionManager,
-  type CollisionHandler,
+  CollisionSide,
   type CollisionResult,
 } from "../CollisionManager";
 import { CollisionDebugRenderer } from "../debug/CollisionDebugRenderer";
 import { EntityManager } from "../EntityManager";
 import { POOL_ID } from "../EntityPool";
-import { SpawnManager } from "../SpawnManager";
+import { SpawnManager, type SpawnData } from "../SpawnManager";
+import { CollisionLayer } from "./component/Collider";
 import { GAME_SPEED } from "./configs/GameConfig";
 import { type Lane } from "./configs/LaneConfig";
 import { PATTERNS, SPAWN_CONFIG, type SpawnCell } from "./configs/SpawnConfig";
 import type { WorldEntity } from "./entity/base/WorldEntity";
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
-import { CollisionLayer } from "./component/Collider";
 
 export class GameWorld extends Container3D {
+  public onHitObstacle: Subject<void> = new Subject<void>();
+  public onScored: Subject<void> = new Subject<void>();
+
   private readonly _entityManager = new EntityManager();
-
   private readonly _collisionManager: CollisionManager;
-
-  private readonly _spawnManager = new SpawnManager(
-    PATTERNS,
-    SPAWN_CONFIG,
-    (type, lane, z) => {
-      this._spawn(type, lane, z);
-    },
-  );
+  private readonly _spawnManager = new SpawnManager(PATTERNS, SPAWN_CONFIG);
 
   private readonly _collisionDebug: CollisionDebugRenderer;
 
@@ -45,17 +41,20 @@ export class GameWorld extends Container3D {
 
   private _speed = GAME_SPEED.initial;
 
-  constructor(onCollision?: CollisionHandler) {
+  constructor() {
     super();
 
     this._collisionManager = new CollisionManager((collision) => {
-      onCollision?.(collision);
       this._handleCollision(collision);
     });
     this._collisionDebug = new CollisionDebugRenderer(
       this,
       this._collisionManager,
     );
+
+    this._spawnManager.onSpawn.subscribe((spawnData) => {
+      this._spawn(spawnData);
+    });
   }
 
   public get speed(): number {
@@ -131,12 +130,22 @@ export class GameWorld extends Container3D {
   private _handleCollision(collision: CollisionResult): void {
     switch (collision.collider.layer) {
       case CollisionLayer.Collectible:
+        this.onScored.next();
         this._entityManager.remove(collision.collider.entity);
         break;
+      case CollisionLayer.Obstacle:
+        if (collision.side !== CollisionSide.Back) {
+          collision.collider.enabled = false;
+          this._reduceSpeed(GAME_SPEED.sideCollisionPenalty);
+        } else {
+          this.onHitObstacle.next();
+        }
     }
   }
 
-  private _spawn(type: SpawnCell, lane: Lane, z: number): void {
+  private _spawn(spawnData: SpawnData): void {
+    const { type, lane, z } = spawnData;
+
     if (type === "x") {
       return;
     }
@@ -150,6 +159,13 @@ export class GameWorld extends Container3D {
   private _updateSpeed(deltaTime: number): void {
     this._speed = Math.min(
       this._speed + GAME_SPEED.acceleration * deltaTime,
+      GAME_SPEED.maximum,
+    );
+  }
+
+  private _reduceSpeed(amount: number): void {
+    this._speed = Math.min(
+      Math.max(this._speed - amount, GAME_SPEED.initial),
       GAME_SPEED.maximum,
     );
   }
