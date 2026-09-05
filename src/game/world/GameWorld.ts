@@ -8,7 +8,11 @@ import {
 import { Assets } from "pixi.js";
 
 import { type KeyboardAction } from "../../input/KeyboardInput";
-import { CollisionManager, type CollisionHandler } from "../CollisionManager";
+import {
+  CollisionManager,
+  type CollisionHandler,
+  type CollisionResult,
+} from "../CollisionManager";
 import { CollisionDebugRenderer } from "../debug/CollisionDebugRenderer";
 import { EntityManager } from "../EntityManager";
 import { POOL_ID } from "../EntityPool";
@@ -45,9 +49,9 @@ export class GameWorld extends Container3D {
   constructor(onCollision?: CollisionHandler) {
     super();
 
-    this._collisionManager = new CollisionManager((player, collider) => {
-      onCollision?.(player, collider);
-      this._handleCollision(player, collider);
+    this._collisionManager = new CollisionManager((collision) => {
+      onCollision?.(collision);
+      this._handleCollision(collision);
     });
     this._collisionDebug = new CollisionDebugRenderer(
       this,
@@ -114,7 +118,7 @@ export class GameWorld extends Container3D {
     this._collisionDebug.update();
   }
 
-  public readonly onKeyboardAction = (action: KeyboardAction): void => {
+  public onKeyboardAction(action: KeyboardAction): void {
     switch (action) {
       case "left":
         this._player.moveLeft();
@@ -128,23 +132,20 @@ export class GameWorld extends Container3D {
         this._player.jump();
         break;
     }
-  };
+  }
 
   public destroy(): void {
     this._entityManager.clear();
     super.destroy();
   }
 
-  private readonly _handleCollision: CollisionHandler = (
-    player,
-    collider,
-  ): void => {
-    switch (collider.layer) {
+  private _handleCollision(collision: CollisionResult): void {
+    switch (collision.collider.layer) {
       case CollisionLayer.Collectible:
-        this._entityManager.remove(collider.entity);
+        this._entityManager.remove(collision.collider.entity);
         break;
     }
-  };
+  }
 
   private _spawn(type: SpawnCell, lane: Lane, z: number): void {
     if (type === "x") {

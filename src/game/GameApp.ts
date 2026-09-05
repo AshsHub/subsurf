@@ -34,7 +34,8 @@ export class GameApp {
   private readonly _gameWorld: GameWorld;
 
   constructor() {
-    this._gameWorld = new GameWorld((_player, collider) => {
+    this._gameWorld = new GameWorld((collision) => {
+      const { collider } = collision;
       if (collider.layer === CollisionLayer.Collectible) {
         this.addCollection();
       } else if (collider.layer === CollisionLayer.Obstacle) {

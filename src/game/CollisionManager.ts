@@ -1,6 +1,21 @@
 import { CollisionLayer, type Collider } from "./world/component/Collider";
 
-export type CollisionHandler = (player: Collider, collider: Collider) => void;
+export enum CollisionSide {
+  Top,
+  Bottom,
+  Left,
+  Right,
+  Front,
+  Back,
+}
+
+export type CollisionResult = {
+  player: Collider;
+  collider: Collider;
+  side: CollisionSide;
+};
+
+export type CollisionHandler = (collision: CollisionResult) => void;
 
 export class CollisionManager {
   private readonly _colliders = new Set<Collider>();
@@ -42,13 +57,14 @@ export class CollisionManager {
         if (!this._intersects(a, b)) {
           continue;
         }
-
-        if (a.layer === CollisionLayer.Player) {
-          this._onCollision?.(a, b);
-        } else {
-          this._onCollision?.(b, a);
-        }
-
+        const player = a.layer === CollisionLayer.Player ? a : b;
+        const collider = player === a ? b : a;
+        const side = this._getCollisionSide(player, collider);
+        this._onCollision?.({
+          player,
+          collider,
+          side,
+        });
         return;
       }
     }
@@ -74,6 +90,34 @@ export class CollisionManager {
       a.minZ < b.maxZ &&
       a.maxZ > b.minZ
     );
+  }
+
+  private _getCollisionSide(
+    player: Collider,
+    collider: Collider,
+  ): CollisionSide {
+    const overlapX =
+      Math.min(player.maxX, collider.maxX) -
+      Math.max(player.minX, collider.minX);
+    const overlapY =
+      Math.min(player.maxY, collider.maxY) -
+      Math.max(player.minY, collider.minY);
+    const overlapZ =
+      Math.min(player.maxZ, collider.maxZ) -
+      Math.max(player.minZ, collider.minZ);
+    if (overlapX <= overlapY && overlapX <= overlapZ) {
+      return player.centerX < collider.centerX
+        ? CollisionSide.Right
+        : CollisionSide.Left;
+    }
+    if (overlapY <= overlapZ) {
+      return player.centerY < collider.centerY
+        ? CollisionSide.Top
+        : CollisionSide.Bottom;
+    }
+    return player.centerZ < collider.centerZ
+      ? CollisionSide.Front
+      : CollisionSide.Back;
   }
 
   public clear(): void {
