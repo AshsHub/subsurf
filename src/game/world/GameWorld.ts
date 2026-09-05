@@ -82,10 +82,12 @@ export class GameWorld extends Container3D {
 
   public pause(): void {
     this._spawnManager.pause();
+    this._entityManager.pause();
   }
 
   public resume(): void {
     this._spawnManager.resume();
+    this._entityManager.resume();
   }
 
   public end(): void {

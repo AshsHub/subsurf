@@ -2,6 +2,7 @@ import { Container3D } from "pixi3d/pixi7";
 import { Collider, type ColliderOptions } from "../../component/Collider";
 import type { Lane } from "../../configs/LaneConfig";
 import type { POOL_ID } from "../../../EntityPool";
+import { AnimationController } from "../../component/AnimationController";
 
 export abstract class WorldEntity extends Container3D {
   public abstract readonly poolId: POOL_ID | null;
@@ -10,6 +11,7 @@ export abstract class WorldEntity extends Container3D {
   private _active = true;
   readonly visual: Container3D;
   private _collider?: Collider;
+  private _animationController?: AnimationController;
 
   constructor() {
     super();
@@ -53,7 +55,9 @@ export abstract class WorldEntity extends Container3D {
   /**
    * Called before the entity is removed.
    */
-  public onRemoved(): void {}
+  public onRemoved(): void {
+    this._animationController?.kill();
+  }
 
   public get collider(): Collider | undefined {
     return this._collider;
@@ -63,6 +67,15 @@ export abstract class WorldEntity extends Container3D {
     this._collider = new Collider(this, options);
 
     return this._collider;
+  }
+
+  public get animationController(): AnimationController | undefined {
+    return this._animationController;
+  }
+
+  public setAnimationController(): AnimationController {
+    this._animationController = new AnimationController();
+    return this._animationController;
   }
 
   public destroyEntity(): void {

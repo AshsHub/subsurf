@@ -14,6 +14,7 @@ export class EntityManager {
 
   private _collisionManager!: CollisionManager;
   private _gameWorld!: GameWorld;
+  private _paused = false;
 
   public init(world: GameWorld, collisionManager: CollisionManager): void {
     this._gameWorld = world;
@@ -89,7 +90,9 @@ export class EntityManager {
     }
 
     entity.onRemoved();
-    this._entityPool.release(entity.poolId, entity);
+    if (entity.poolId) {
+      this._entityPool.release(entity.poolId, entity);
+    }
   }
 
   /**
@@ -199,5 +202,29 @@ export class EntityManager {
 
   public get activeSize(): number {
     return this._activeEntities.size;
+  }
+
+  public pause(): void {
+    if (this._paused) {
+      return;
+    }
+
+    this._paused = true;
+
+    for (const entity of this._entities) {
+      entity.animationController?.pause();
+    }
+  }
+
+  public resume(): void {
+    if (!this._paused) {
+      return;
+    }
+
+    this._paused = false;
+
+    for (const entity of this._entities) {
+      entity.animationController?.resume();
+    }
   }
 }

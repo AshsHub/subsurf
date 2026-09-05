@@ -1,13 +1,14 @@
 import { Container } from "pixi.js";
 
-export class UIRoot extends Container {
-  onResize(width: number, height: number) {
-    for (const child of this.children) {
-      const resizeable = child as {
-        onResize?: (width: number, height: number) => void;
-      };
+export interface Resizable {
+  onResize(width: number, height: number): void;
+}
 
-      resizeable.onResize?.(width, height);
+export class UIRoot extends Container {
+  public onResize(width: number, height: number): void {
+    debugger;
+    for (const child of this.children) {
+      (child as Partial<Resizable>).onResize?.(width, height);
     }
   }
 }

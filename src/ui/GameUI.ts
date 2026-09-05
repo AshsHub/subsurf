@@ -1,10 +1,11 @@
 import { Container } from "pixi.js";
 import { TextButton } from "./TextButton";
 import { CollectionProgress } from "./CollectionProgress";
+import type { Resizable } from "./UIRoot";
 
 const UI_PADDING = 24;
 
-export class GameUI extends Container {
+export class GameUI extends Container implements Resizable {
   private readonly pauseButton: TextButton;
   private readonly collectionProgress: CollectionProgress;
 
@@ -25,9 +26,6 @@ export class GameUI extends Container {
     this.collectionProgress = new CollectionProgress(targetCollections);
 
     this.addChild(this.collectionProgress, this.pauseButton);
-
-    this.resize(window.innerWidth, window.innerHeight);
-
     this.hide();
   }
 
@@ -55,7 +53,7 @@ export class GameUI extends Container {
     this.collectionProgress.setValue(0);
   }
 
-  public resize(width: number, height: number): void {
+  public onResize(width: number, height: number): void {
     this.pauseButton.position.set(
       width - this.pauseButton.width / 2 - UI_PADDING,
       this.pauseButton.height / 2 + UI_PADDING,

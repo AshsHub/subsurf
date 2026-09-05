@@ -23,6 +23,8 @@ export class OverlayManager {
   private currentOverlayId: OverlayId | undefined;
 
   private transitionVersion = 0;
+  private _screenWidth = 0;
+  private _screenHeight = 0;
 
   constructor(
     private _app: Application,
@@ -95,9 +97,8 @@ export class OverlayManager {
 
     this._parent.addChild(overlay);
 
-    overlay.onResize?.(this._app.screen.width, this._app.screen.height);
-
     await overlay.onEnter?.(this._app, options.meta);
+    await overlay.onResize?.(this._screenWidth, this._screenHeight);
 
     if (version !== this.transitionVersion) {
       this._removeOverlay(overlay);
@@ -121,10 +122,6 @@ export class OverlayManager {
     }
   }
 
-  public handleResize(width: number, height: number): void {
-    this.currentOverlay?.onResize?.(width, height);
-  }
-
   public destroy(): void {
     ++this.transitionVersion;
 
@@ -135,6 +132,12 @@ export class OverlayManager {
 
     this.currentOverlay = undefined;
     this.currentOverlayId = undefined;
+  }
+
+  public onResize(width: number, height: number) {
+    this.currentOverlay?.onResize?.(width, height);
+    this._screenWidth = width;
+    this._screenHeight = height;
   }
 
   private _stopTransitionAnimation(overlay: Overlay): void {

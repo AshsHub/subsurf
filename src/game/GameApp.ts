@@ -32,6 +32,7 @@ export class GameApp {
   private _gameUI!: GameUI;
   private _overlayManager!: OverlayManager;
 
+  private _uiRoot: UIRoot;
   private readonly _gameState = new GameStateManager();
   private readonly _assetLoader = new AssetLoader();
   private readonly _keyboard = new KeyboardInput();
@@ -48,7 +49,11 @@ export class GameApp {
       }
     });
 
-    this._gameState.onChange(this._onGameStateChange);
+    this._gameState.onChange((stateChange) => {
+      this._onGameStateChange(stateChange);
+    });
+
+    this._uiRoot = new UIRoot();
   }
 
   public async init(): Promise<void> {
@@ -89,8 +94,6 @@ export class GameApp {
     container.appendChild(canvas);
 
     this._app = app;
-
-    const uiRoot = new UIRoot();
 
     const overlayFactories = new Map<OverlayId, OverlayFactory>([
       [
@@ -135,7 +138,7 @@ export class GameApp {
 
     this._overlayManager = new OverlayManager(
       this._app,
-      uiRoot,
+      this._uiRoot,
       overlayFactories,
     );
 
@@ -150,36 +153,19 @@ export class GameApp {
     }, this._gameProgress.collectionTarget);
 
     this._gameUI.hide();
+    this._uiRoot.addChild(this._gameUI);
 
-    app.stage.addChild(uiRoot, this._gameUI);
+    app.stage.addChild(this._uiRoot);
 
-    this._keyboard.onAction(this.onKeyboardAction);
+    this._keyboard.onAction(this._onKeyboardAction);
 
     this.initListeners();
-    this.handleResize();
+    this._handleResize();
   }
 
   private initListeners(): void {
-    window.addEventListener("resize", this.handleResize);
+    window.addEventListener("resize", this._handleResize);
   }
-
-  private readonly onKeyboardAction = (action: KeyboardAction): void => {
-    if (action === KeyboardAction.Pause) {
-      if (this._gameState.state === GameState.Paused) {
-        this._gameState.resume();
-      } else if (this._gameState.state === GameState.Playing) {
-        this._gameState.pause();
-      }
-
-      return;
-    }
-
-    if (this._gameState.state !== GameState.Playing) {
-      return;
-    }
-
-    this._gameWorld.onKeyboardAction(action);
-  };
 
   private setupScene(): void {
     if (!this._app) {
@@ -209,11 +195,7 @@ export class GameApp {
     this._gameUI.reset();
   }
 
-  private readonly _onGameStateChange = ({
-    from,
-    to,
-    result,
-  }: GameStateChange): void => {
+  private _onGameStateChange({ from, to, result }: GameStateChange): void {
     switch (to) {
       case GameState.Playing:
         if (from === GameState.Paused) {
@@ -252,26 +234,42 @@ export class GameApp {
         this._gameUI.hide();
         break;
     }
-  };
-
-  private readonly handleResize = (): void => {
-    if (!this._app) {
-      return;
-    }
-
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-
-    this._gameUI.resize(width, height);
-
-    this._overlayManager.handleResize(width, height);
-  };
+  }
 
   public destroy(): void {
-    window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener("resize", this._handleResize);
 
     this._keyboard.destroy();
 
     this._app?.destroy(true);
   }
+
+  private _onKeyboardAction = (action: KeyboardAction): void => {
+    if (action === KeyboardAction.Pause) {
+      if (this._gameState.state === GameState.Paused) {
+        this._gameState.resume();
+      } else if (this._gameState.state === GameState.Playing) {
+        this._gameState.pause();
+      }
+
+      return;
+    }
+
+    if (this._gameState.state !== GameState.Playing) {
+      return;
+    }
+
+    this._gameWorld.onKeyboardAction(action);
+  };
+
+  private readonly _handleResize = (): void => {
+    if (!this._app) {
+      return;
+    }
+
+    const { width, height } = this._app.screen;
+
+    this._overlayManager.onResize(width, height);
+    this._gameUI.onResize(width, height);
+  };
 }

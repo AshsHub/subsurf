@@ -32,6 +32,7 @@ export class Obstacle extends DynamicEntity {
       depth: depth * 0.8,
       layer: CollisionLayer.Obstacle,
       offsetY: height / 2,
+      enabled: false,
     });
   }
 

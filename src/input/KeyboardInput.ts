@@ -50,7 +50,7 @@ export class KeyboardInput {
         break;
     }
 
-    if (!action) {
+    if (action === undefined) {
       return;
     }
 

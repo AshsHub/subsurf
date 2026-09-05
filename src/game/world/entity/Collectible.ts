@@ -35,10 +35,22 @@ export class Collectible extends DynamicEntity {
       layer: CollisionLayer.Collectible,
       offsetY: height * 2,
     });
+
+    this.setAnimationController();
   }
 
   public spawn(lane: Lane, z: number): void {
     this.position.set(LANE_POSITIONS[lane], 0, z);
+  }
+
+  public override onAdded(): void {
+    this.animationController?.to(this.visual.position, {
+      y: 0.2,
+      duration: 0.6,
+      yoyo: true,
+      repeat: -1,
+      ease: "sine.inOut",
+    });
   }
 
   public override onPoolAcquire(): void {
