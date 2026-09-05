@@ -1,9 +1,12 @@
 import { Assets } from "pixi.js";
 import {
+  Color,
   Container3D,
   Cubemap,
+  Fog,
   Light,
   LightingEnvironment,
+  LightType,
   Skybox,
 } from "pixi3d/pixi7";
 
@@ -184,14 +187,56 @@ export class GameWorld extends Container3D {
   }
 
   private setupLighting(): void {
-    const light = new Light();
+    const environment = LightingEnvironment.main;
 
-    light.position.set(-1, 2, 3);
+    // --------------------------------------------------
+    // Player key
+    // --------------------------------------------------
 
-    light.color.r = 1;
-    light.color.g = 1;
-    light.color.b = 1;
+    const playerKey = new Light();
 
-    LightingEnvironment.main.lights.push(light);
+    playerKey.type = LightType.point;
+    playerKey.position.set(0, 3.5, -2.5);
+    playerKey.intensity = 45;
+    playerKey.range = 8;
+
+    playerKey.color.r = 1;
+    playerKey.color.g = 0.95;
+    playerKey.color.b = 0.9;
+
+    // --------------------------------------------------
+    // Player fill
+    // --------------------------------------------------
+
+    const playerFill = new Light();
+
+    playerFill.type = LightType.point;
+    playerFill.position.set(-3, 2.5, 1);
+    playerFill.intensity = 18;
+    playerFill.range = 7;
+
+    playerFill.color.r = 0.65;
+    playerFill.color.g = 0.8;
+    playerFill.color.b = 1;
+
+    // --------------------------------------------------
+    // Road light
+    //
+    // Gives visibility further down the road without
+    // illuminating the entire track.
+    // --------------------------------------------------
+
+    const roadLight = new Light();
+
+    roadLight.type = LightType.point;
+    roadLight.position.set(0, 4, -12);
+    roadLight.intensity = 20;
+    roadLight.range = 25;
+
+    roadLight.color.r = 0.75;
+    roadLight.color.g = 0.8;
+    roadLight.color.b = 0.9;
+
+    environment.lights.push(playerKey, playerFill, roadLight);
   }
 }

@@ -21,6 +21,18 @@
       "name": "game-core",
       "assets": [
         {
+          "alias": "player-body-texture",
+          "src": "/assets/game-core/player-body-texture.jpg"
+        },
+        {
+          "alias": "player-cockpit-texture",
+          "src": "/assets/game-core/player-cockpit-texture.jpg"
+        },
+        {
+          "alias": "player-engine-texture",
+          "src": "/assets/game-core/player-engine-texture.jpg"
+        },
+        {
           "alias": "road-texture",
           "src": "/assets/game-core/road-texture.png"
         },

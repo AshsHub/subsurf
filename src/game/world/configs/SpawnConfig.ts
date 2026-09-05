@@ -15,7 +15,7 @@ export interface SpawnConfig {
 }
 
 export const SPAWN_CONFIG: SpawnConfig = {
-  spawnZ: -20,
+  spawnZ: -35,
   // Distance between rows.
   rowSpacing: 5,
   // Seconds before the first pattern starts.

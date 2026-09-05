@@ -1,16 +1,28 @@
 import { Assets, WRAP_MODES } from "pixi.js";
-import { Mesh3D } from "pixi3d/pixi7";
+import {
+  Mesh3D,
+  StandardMaterial,
+  StandardMaterialTexture,
+  TextureTransform,
+} from "pixi3d/pixi7";
 
-import { TrackMaterial } from "../../../rendering/materials/track/TrackMaterial";
 import { TRACK_CONFIG } from "../configs/GameConfig";
 import { Mesh3DCustom } from "../mesh/Mesh3DCustom";
 import { StaticEntity } from "./base/StaticEntity";
 
 export class Track extends StaticEntity {
   static readonly poolId = "track";
+
   protected _shouldUpdate = true;
-  private _material: TrackMaterial;
+
   readonly body: Mesh3D;
+
+  private readonly _material: StandardMaterial;
+  private readonly _texture: StandardMaterialTexture;
+
+  private _scrollOffset = 0;
+  private readonly _direction = -1;
+
   static create(): Track {
     return new Track();
   }
@@ -20,7 +32,12 @@ export class Track extends StaticEntity {
 
     const texture = Assets.get("road-texture");
     texture.baseTexture.wrapMode = WRAP_MODES.REPEAT;
-    this._material = new TrackMaterial(texture);
+
+    this._texture = new StandardMaterialTexture(texture.baseTexture);
+    this._texture.transform = new TextureTransform();
+
+    this._material = new StandardMaterial();
+    this._material.baseColorTexture = this._texture;
 
     this.body = Mesh3DCustom.createPlane({
       width: TRACK_CONFIG.width,
@@ -31,11 +48,18 @@ export class Track extends StaticEntity {
     });
 
     this.visual.position.z = -45;
-
     this.visual.addChild(this.body);
   }
 
   public update(deltaTime: number, speed: number): void {
-    this._material.scroll(deltaTime, speed);
+    const uvSpeed = speed * (TRACK_CONFIG.uvRepeatY / TRACK_CONFIG.length);
+
+    this._scrollOffset += uvSpeed * deltaTime * this._direction;
+    this._texture.transform!.offset.y = this._scrollOffset;
+  }
+
+  public reset(): void {
+    this._scrollOffset = 0;
+    this._texture.transform!.offset.y = 0;
   }
 }

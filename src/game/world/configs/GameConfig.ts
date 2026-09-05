@@ -8,7 +8,7 @@ export interface GameSpeedConfig {
 export const GAME_SPEED: GameSpeedConfig = {
   initial: 5,
   maximum: 25,
-  acceleration: 0.5,
+  acceleration: 0.0005,
   sideCollisionPenalty: 5,
 };
 
@@ -38,12 +38,4 @@ export const COLLECTIBLE_CONFIG = {
     depth: 0.25,
   },
   spinSpeed: 10,
-};
-
-export const PLAYER_CONFIG = {
-  body: {
-    width: 1,
-    height: 1,
-    depth: 1,
-  },
 };
