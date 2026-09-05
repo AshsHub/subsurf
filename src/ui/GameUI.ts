@@ -1,6 +1,7 @@
 import { Container } from "pixi.js";
 import { TextButton } from "./TextButton";
 import { CollectionProgress } from "./CollectionProgress";
+import { ControlsDemo } from "./ControlsDemo";
 import type { Resizable } from "./UIRoot";
 
 const UI_PADDING = 24;
@@ -8,6 +9,8 @@ const UI_PADDING = 24;
 export class GameUI extends Container implements Resizable {
   private readonly pauseButton: TextButton;
   private readonly collectionProgress: CollectionProgress;
+  private readonly controlsDemo: ControlsDemo;
+  private _demoHidden = false;
 
   constructor(onPause: () => void, targetCollections: number) {
     super();
@@ -24,8 +27,10 @@ export class GameUI extends Container implements Resizable {
     });
 
     this.collectionProgress = new CollectionProgress(targetCollections);
+    this.controlsDemo = new ControlsDemo();
 
-    this.addChild(this.collectionProgress, this.pauseButton);
+    this.addChild(this.collectionProgress, this.pauseButton, this.controlsDemo);
+
     this.hide();
   }
 
@@ -35,6 +40,7 @@ export class GameUI extends Container implements Resizable {
 
     this.pauseButton.setEnabled(true);
     this.collectionProgress.setEnabled(true);
+    if (!this._demoHidden) this.controlsDemo.show();
   }
 
   public hide(): void {
@@ -43,6 +49,12 @@ export class GameUI extends Container implements Resizable {
 
     this.pauseButton.setEnabled(false);
     this.collectionProgress.setEnabled(false);
+    this.controlsDemo.hide();
+  }
+
+  public hideDemo(): void {
+    this._demoHidden = true;
+    this.controlsDemo.hide();
   }
 
   public setCollections(value: number): void {
@@ -58,6 +70,8 @@ export class GameUI extends Container implements Resizable {
       width - this.pauseButton.width / 2 - UI_PADDING,
       this.pauseButton.height / 2 + UI_PADDING,
     );
+
     this.collectionProgress.position.set(width / 2, UI_PADDING);
+    this.controlsDemo.onResize(width, height);
   }
 }

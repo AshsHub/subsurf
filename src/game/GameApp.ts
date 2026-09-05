@@ -245,6 +245,15 @@ export class GameApp {
   }
 
   private _onKeyboardAction = (action: KeyboardAction): void => {
+    if (
+      [
+        KeyboardAction.MoveLeft,
+        KeyboardAction.MoveRight,
+        KeyboardAction.Jump,
+      ].includes(action)
+    ) {
+      this._gameUI.hideDemo();
+    }
     if (action === KeyboardAction.Pause) {
       if (this._gameState.state === GameState.Paused) {
         this._gameState.resume();
