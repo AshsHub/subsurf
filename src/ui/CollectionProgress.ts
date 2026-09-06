@@ -33,7 +33,7 @@ export class CollectionProgress extends Container {
     },
 
     text: {
-      fontSize: 12,
+      fontSize: 24,
       letterSpacing: 0.8,
       strokeThickness: 4,
     },
@@ -185,6 +185,7 @@ export class CollectionProgress extends Container {
     );
 
     this._valueText.anchor.set(0, 0.5);
+    this._valueText.scale.set(0.5);
 
     this.addChild(
       this._outerGlow,

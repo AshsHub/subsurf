@@ -32,7 +32,7 @@ export class TextButton extends AnimatedButton {
 
     this.label.anchor.set(0.5);
     this.label.position.set(width / 2, height / 2);
-
+    this.label.resolution = 2;
     this.addChild(this.background, this.label);
 
     // Centre the button around its position.
