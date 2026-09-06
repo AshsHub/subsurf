@@ -53,17 +53,45 @@ export class Player extends DynamicEntity {
     y: 0,
     z: 0,
   };
-  private _bodySpin = { y: 0 };
+
+  private readonly _idleRotation = {
+    x: 0,
+  };
+
+  private readonly _cockpitBasePosition = {
+    x: 0,
+    y: 0.6,
+    z: 0,
+  };
+
+  private readonly _cockpitBaseScale = {
+    x: 0.5,
+    y: 0.35,
+    z: 0.5,
+  };
+
+  private _bodySpin = {
+    y: 0,
+  };
 
   private lane: Lane = STARTING_LANE;
+
   private readonly groundY = 0;
+
   private airborne = false;
 
   private readonly jumpHeight = 1.5;
   private readonly jumpDuration = 0.65;
 
+  private _jumpElapsed = 0;
+
   private readonly laneMoveDuration = 0.2;
+
   private _laneMoving = false;
+  private _laneMoveStartX = 0;
+  private _laneMoveTargetX = 0;
+  private _laneMoveElapsed = 0;
+
   private _isColliding = false;
 
   static create(): Player {
@@ -80,6 +108,7 @@ export class Player extends DynamicEntity {
     this.visual.addChild(this.ufo);
 
     this._craftUFO();
+
     this._startIdleAnimation();
 
     this.setCollider({
@@ -92,8 +121,6 @@ export class Player extends DynamicEntity {
   }
 
   private _craftUFO(): void {
-    //! Body
-
     const bodyTexture = Assets.get("player-body-texture");
 
     if (!bodyTexture) {
@@ -126,8 +153,6 @@ export class Player extends DynamicEntity {
     this._body.scale.set(1, 0.25, 1);
     this._body.position.set(0, 0.5, 0);
 
-    //! Cockpit
-
     const cockpitTexture = Assets.get("player-cockpit-texture");
 
     if (!cockpitTexture) {
@@ -157,13 +182,21 @@ export class Player extends DynamicEntity {
       material: cockpitMaterial,
     });
 
-    this._cockpit.scale.set(0.5, 0.35, 0.5);
-    this._cockpit.position.set(0, 0.6, 0);
+    this._cockpit.scale.set(
+      this._cockpitBaseScale.x,
+      this._cockpitBaseScale.y,
+      this._cockpitBaseScale.z,
+    );
 
-    //! Engine
+    this._cockpit.position.set(
+      this._cockpitBasePosition.x,
+      this._cockpitBasePosition.y,
+      this._cockpitBasePosition.z,
+    );
 
-    this._engineMaterial = new StandardMaterial();
+    const engineMaterial = new StandardMaterial();
 
+    this._engineMaterial = engineMaterial;
     this._engineMaterial.baseColor = this._engineColor;
     this._engineMaterial.emissive = this._engineEmissiveColor;
 
@@ -197,8 +230,6 @@ export class Player extends DynamicEntity {
     );
 
     this._engine.position.set(0, 0.4, 0);
-
-    //! Engine light
 
     this._engineLight = new Light();
 
@@ -249,6 +280,7 @@ export class Player extends DynamicEntity {
     }
 
     this.airborne = true;
+    this._jumpElapsed = 0;
     this._animateJump();
     return true;
   }
@@ -262,8 +294,59 @@ export class Player extends DynamicEntity {
   }
 
   public update(dt: number): void {
+    this._updateLaneMovement(dt);
+    this._updateJump(dt);
     this._updateEngineLight(dt);
     this._updateEngineTexture(dt);
+  }
+
+  private setLane(lane: Lane): void {
+    this.lane = lane;
+
+    this._laneMoveStartX = this.position.x;
+    this._laneMoveTargetX = LANE_POSITIONS[lane];
+    this._laneMoveElapsed = 0;
+
+    this._laneMoving = true;
+  }
+
+  private _updateLaneMovement(dt: number): void {
+    if (!this._laneMoving) {
+      return;
+    }
+
+    this._laneMoveElapsed += dt;
+
+    const progress = Math.min(this._laneMoveElapsed / this.laneMoveDuration, 1);
+    const easedProgress = 1 - Math.pow(1 - progress, 2);
+
+    this.position.x =
+      this._laneMoveStartX +
+      (this._laneMoveTargetX - this._laneMoveStartX) * easedProgress;
+
+    if (progress >= 1) {
+      this.position.x = this._laneMoveTargetX;
+      this._laneMoving = false;
+    }
+  }
+
+  private _updateJump(dt: number): void {
+    if (!this.airborne) {
+      return;
+    }
+
+    this._jumpElapsed += dt;
+
+    const progress = Math.min(this._jumpElapsed / this.jumpDuration, 1);
+
+    this.position.y =
+      this.groundY + Math.sin(progress * Math.PI) * this.jumpHeight;
+
+    if (progress >= 1) {
+      this.position.y = this.groundY;
+      this.airborne = false;
+      this._animateLanding();
+    }
   }
 
   private _startIdleAnimation(): void {
@@ -277,8 +360,8 @@ export class Player extends DynamicEntity {
       ease: "sine.inOut",
     });
 
-    controller.to(this._ufoRotation, {
-      x: -3.5,
+    controller.to(this._idleRotation, {
+      x: 1.5,
       duration: 1.2,
       yoyo: true,
       repeat: -1,
@@ -288,7 +371,6 @@ export class Player extends DynamicEntity {
       },
     });
 
-    // Rotating body
     controller.to(this._bodySpin, {
       y: 360,
       duration: 3,
@@ -300,21 +382,6 @@ export class Player extends DynamicEntity {
           this._bodySpin.y % 360,
           0,
         );
-      },
-    });
-  }
-
-  private setLane(lane: Lane): void {
-    this.lane = lane;
-    this._laneMoving = true;
-
-    this.animationController!.to(this.position, {
-      x: LANE_POSITIONS[lane],
-      duration: this.laneMoveDuration,
-      ease: "power2.out",
-      onComplete: () => {
-        this.position.x = LANE_POSITIONS[lane];
-        this._laneMoving = false;
       },
     });
   }
@@ -398,25 +465,6 @@ export class Player extends DynamicEntity {
   private _animateJump(): void {
     const controller = this.animationController!;
     const timeline = controller.timeline();
-
-    const jump = {
-      progress: 0,
-    };
-
-    controller.to(jump, {
-      progress: 1,
-      duration: this.jumpDuration,
-      ease: "none",
-      onUpdate: () => {
-        this.position.y =
-          this.groundY + Math.sin(jump.progress * Math.PI) * this.jumpHeight;
-      },
-      onComplete: () => {
-        this.position.y = this.groundY;
-        this.airborne = false;
-        this._animateLanding();
-      },
-    });
 
     timeline.to(this.visual.scale, {
       x: 0.92,
@@ -540,7 +588,9 @@ export class Player extends DynamicEntity {
   public collide(subtle: boolean, onComplete?: () => void): void {
     this._isColliding = true;
 
-    if (!subtle) this.animationController?.kill();
+    if (!subtle) {
+      this.animationController?.kill();
+    }
 
     const controller = this.animationController!;
     const timeline = controller.timeline({
@@ -557,7 +607,11 @@ export class Player extends DynamicEntity {
 
     if (subtle) {
       const cockpitY = this._cockpit.position.y;
-      const cockpitScale = this._cockpit.scale;
+      const cockpitScale = {
+        x: this._cockpit.scale.x,
+        y: this._cockpit.scale.y,
+        z: this._cockpit.scale.z,
+      };
 
       timeline
         .to(this.visual.scale, {
@@ -618,7 +672,9 @@ export class Player extends DynamicEntity {
           "<",
         );
     } else {
-      const rot = { x: 0 };
+      const rot = {
+        x: 0,
+      };
 
       timeline
         .to(this.visual.position, {
@@ -645,7 +701,9 @@ export class Player extends DynamicEntity {
   }
 
   private _updateEngineLight(dt: number): void {
-    if (this._isColliding) return;
+    if (this._isColliding) {
+      return;
+    }
 
     this._engineLightTime += dt;
 
@@ -664,28 +722,48 @@ export class Player extends DynamicEntity {
 
   private _applyUfoRotation(): void {
     this.ufo.rotationQuaternion.setEulerAngles(
-      this._ufoRotation.x,
+      this._ufoRotation.x + this._idleRotation.x,
       this._ufoRotation.y,
       this._ufoRotation.z,
     );
   }
 
   public reset(): void {
-    this.animationController?.kill();
+    const controller = this.animationController!;
+    controller.kill();
+    this.position.set(LANE_POSITIONS[STARTING_LANE], this.groundY, 0);
     this.lane = STARTING_LANE;
 
-    this.position.x = LANE_POSITIONS[STARTING_LANE];
-    this.position.y = this.groundY;
-    this.ufo.position.set(0, 0, 0);
-
     this.airborne = false;
+    this._jumpElapsed = 0;
     this._laneMoving = false;
+    this._laneMoveElapsed = 0;
+    this._laneMoveStartX = LANE_POSITIONS[STARTING_LANE];
+    this._laneMoveTargetX = LANE_POSITIONS[STARTING_LANE];
+    this._isColliding = false;
+    this.visual.position.set(0, 0, 0);
+    this.visual.scale.set(1, 1, 1);
+    this.visual.rotationQuaternion.setEulerAngles(0, 0, 0);
 
-    this._engineLightTime = 0;
-    this._engineScroll = 0;
-
-    this._engineLight.intensity = ENGINE_LIGHT_INTENSITY;
-    this._engineTextureTransform.offset.y = 0;
+    this._ufoRotation.x = -5;
+    this._ufoRotation.y = 0;
+    this._ufoRotation.z = 0;
+    this._idleRotation.x = 0;
+    this._applyUfoRotation();
+    this._bodySpin.y = 0;
+    this._body.rotationQuaternion.setEulerAngles(0, 0, 0);
+    this.ufo.position.set(0, 0, 0);
+    this._cockpit.position.set(
+      this._cockpitBasePosition.x,
+      this._cockpitBasePosition.y,
+      this._cockpitBasePosition.z,
+    );
+    this._cockpit.scale.set(
+      this._cockpitBaseScale.x,
+      this._cockpitBaseScale.y,
+      this._cockpitBaseScale.z,
+    );
+    this._engine.visible = true;
 
     this._engine.scale.set(
       this._engineBaseScale.x,
@@ -693,18 +771,13 @@ export class Player extends DynamicEntity {
       this._engineBaseScale.z,
     );
 
-    this._ufoRotation.x = -5;
-    this._ufoRotation.y = 0;
-    this._ufoRotation.z = 0;
+    this._engineScroll = 0;
+    this._engineLightTime = 0;
 
-    this._bodySpin.y = 0;
+    this._engineLight.intensity = ENGINE_LIGHT_INTENSITY;
 
-    this._isColliding = false;
+    this._engineTextureTransform.offset.y = 0;
 
-    this.visual.position.set(0);
-    this.visual.rotationQuaternion.setEulerAngles(0, 0, 0);
-
-    this._applyUfoRotation();
     this._startIdleAnimation();
   }
 
