@@ -14,3 +14,13 @@
 ## Audio Sources
 
 - Menu music: https://freesound.org/people/vlad.zaichyk/sounds/495019/
+- Gameplay music: https://freesound.org/people/Far_Box_creature/sounds/472712/
+
+- Hit sfx: https://freesound.org/people/TankyTurtle/sounds/701001/
+- Collect sfx: https://freesound.org/people/Phenala/sounds/478647/
+- Move sfx: https://freesound.org/people/mokasza/sounds/810777/
+- Jump sfx: https://freesound.org/people/RescopicSound/sounds/751790/
+- Crash sfx: https://freesound.org/people/J.R.Mythical/sounds/589621/
+- Game Start: https://freesound.org/people/JustInvoke/sounds/446142/
+- Game Win: https://freesound.org/people/elijahdanie/sounds/487436/
+- Game Win: https://freesound.org/people/Jofae/sounds/364929/

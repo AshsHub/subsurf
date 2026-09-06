@@ -2,11 +2,11 @@ import { Assets } from "pixi.js";
 import type { LocalStorage } from "./StorageController";
 
 export enum SoundId {
-  Button = "button",
   Jump = "jump",
   Collect = "collect",
   Hit = "hit",
-  Land = "land",
+  Crash = "crash",
+  Move = "move",
   GameStart = "game-start",
   GameWin = "game-win",
   GameLose = "game-lose",
@@ -22,12 +22,21 @@ export type AudioId = SoundId | MusicId;
 export class SoundController {
   private readonly _storage: LocalStorage;
 
+  private readonly _musicVolumes: Record<MusicId, number> = {
+    [MusicId.Gameplay]: 0.025,
+    [MusicId.Menu]: 0.05,
+  };
+
+  private readonly _sfxVolume = 0.12;
+  private readonly _sfxRandomPitch = 0.05;
+
   private _audioContext: AudioContext | undefined;
   private _masterGain: GainNode | undefined;
 
   private readonly _buffers = new Map<AudioId, AudioBuffer>();
 
   private _musicSource: AudioBufferSourceNode | undefined;
+  private _musicGain: GainNode | undefined;
   private _musicId: MusicId | undefined;
 
   private _muted: boolean;
@@ -116,7 +125,7 @@ export class SoundController {
     this._interactionListener = undefined;
   }
 
-  public playSfx(id: SoundId): void {
+  public playSfx(id: SoundId, randomPitch = false): void {
     const buffer = this._buffers.get(id);
 
     if (!buffer) {
@@ -133,11 +142,23 @@ export class SoundController {
     const source = context.createBufferSource();
 
     source.buffer = buffer;
-    source.connect(this._getMasterGain());
+
+    if (randomPitch) {
+      source.playbackRate.value = this._getRandomPitch();
+    }
+
+    const sfxGain = context.createGain();
+
+    sfxGain.gain.value = this._sfxVolume;
+
+    source.connect(sfxGain);
+    sfxGain.connect(this._getMasterGain());
+
     source.start();
 
     source.onended = () => {
       source.disconnect();
+      sfxGain.disconnect();
     };
   }
 
@@ -162,18 +183,26 @@ export class SoundController {
     this.stopMusic();
 
     const source = context.createBufferSource();
+    const musicGain = context.createGain();
 
     source.buffer = buffer;
     source.loop = true;
-    source.connect(this._getMasterGain());
+
+    musicGain.gain.value = this._musicVolumes[id];
+
+    source.connect(musicGain);
+    musicGain.connect(this._getMasterGain());
+
     source.start();
 
     this._musicSource = source;
+    this._musicGain = musicGain;
     this._musicId = id;
 
     source.onended = () => {
       if (this._musicSource === source) {
         this._musicSource = undefined;
+        this._musicGain = undefined;
         this._musicId = undefined;
       }
     };
@@ -181,21 +210,23 @@ export class SoundController {
 
   public stopMusic(): void {
     const source = this._musicSource;
+    const gain = this._musicGain;
 
     this._musicSource = undefined;
+    this._musicGain = undefined;
     this._musicId = undefined;
 
-    if (!source) {
-      return;
+    if (source) {
+      try {
+        source.stop();
+      } catch {
+        // Source may already have stopped.
+      }
+
+      source.disconnect();
     }
 
-    try {
-      source.stop();
-    } catch {
-      // Source may already have stopped.
-    }
-
-    source.disconnect();
+    gain?.disconnect();
   }
 
   public setMuted(muted: boolean): void {
@@ -231,6 +262,12 @@ export class SoundController {
       this._audioContext = undefined;
       this._masterGain = undefined;
     }
+  }
+
+  private _getRandomPitch(): number {
+    const variation = this._sfxRandomPitch;
+
+    return 1 + (Math.random() * 2 - 1) * variation;
   }
 
   private _getMasterGain(): GainNode {

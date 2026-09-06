@@ -11,6 +11,7 @@ import { IconButton } from "../IconButton";
 export interface ResultOverlayOptions {
   onContinue: () => void;
   onToggleMute: () => void;
+  onResultReveal: () => void;
   muted: boolean;
 }
 
@@ -91,6 +92,7 @@ export abstract class ResultOverlay
   protected _distanceTraveled = 0;
 
   private readonly _onToggleMute: () => void;
+  private readonly _onResultReveal: () => void;
 
   constructor(titleText: string, options: ResultOverlayOptions) {
     super();
@@ -98,6 +100,7 @@ export abstract class ResultOverlay
     const config = ResultOverlay.CONFIG;
 
     this._onToggleMute = options.onToggleMute;
+    this._onResultReveal = options.onResultReveal;
 
     this._background = new IrisRevealBackground(config.background.color);
 
@@ -173,6 +176,7 @@ export abstract class ResultOverlay
     this._background.revealRatio = 1;
 
     this.visible = true;
+    this._continueButton.visible = false;
     this.alpha = 1;
 
     this._contentContainer.alpha = 1;
@@ -266,6 +270,10 @@ export abstract class ResultOverlay
       config.collections.animationDuration,
     );
 
+    gsap.delayedCall(0.75, () => {
+      this._onResultReveal();
+    });
+
     await this._playResultAnimation();
 
     await gsap.to(this._distanceStat, {
@@ -276,6 +284,7 @@ export abstract class ResultOverlay
 
     await this._distanceStat.animateTo(this._distanceTraveled);
 
+    this._continueButton.visible = true;
     gsap.to(this._continueButton, {
       alpha: 1,
       duration: animation.buttonDuration,

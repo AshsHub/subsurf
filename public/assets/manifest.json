@@ -17,22 +17,58 @@
       "name": "home",
       "assets": [
         {
+          "alias": "game-start",
+          "src": "/assets/home/audio/game-start.wav"
+        },
+        {
+          "alias": "menu-music",
+          "src": "/assets/home/audio/menu-music.mp3"
+        },
+        {
           "alias": "icon-mute",
           "src": "/assets/home/icon-mute.png"
         },
         {
           "alias": "icon-unmute",
           "src": "/assets/home/icon-unmute.png"
-        },
-        {
-          "alias": "menu-music",
-          "src": "/assets/home/menu-music.mp3"
         }
       ]
     },
     {
       "name": "game",
       "assets": [
+        {
+          "alias": "collect",
+          "src": "/assets/game/audio/collect.mp3"
+        },
+        {
+          "alias": "crash",
+          "src": "/assets/game/audio/crash.mp3"
+        },
+        {
+          "alias": "game-lose",
+          "src": "/assets/game/audio/game-lose.mp3"
+        },
+        {
+          "alias": "game-win",
+          "src": "/assets/game/audio/game-win.mp3"
+        },
+        {
+          "alias": "gameplay-music",
+          "src": "/assets/game/audio/gameplay-music.mp3"
+        },
+        {
+          "alias": "hit",
+          "src": "/assets/game/audio/hit.mp3"
+        },
+        {
+          "alias": "jump",
+          "src": "/assets/game/audio/jump.mp3"
+        },
+        {
+          "alias": "move",
+          "src": "/assets/game/audio/move.mp3"
+        },
         {
           "alias": "icon-arrow-left",
           "src": "/assets/game/icon-arrow-left.png"

@@ -27,6 +27,7 @@ import { Obstacle } from "./entity/Obstacle";
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
 import { GameplayCamera } from "./CameraController";
+import { SoundId, type SoundController } from "../SoundController";
 
 export class GameWorld extends Container3D {
   public onHitObstacle: Subject<void> = new Subject<void>();
@@ -45,9 +46,12 @@ export class GameWorld extends Container3D {
   private _speed = GAME_SPEED.initial;
   private _incrementSpeed = true;
   private _consecutiveTallObstacles = 0;
+  private _soundController: SoundController;
 
-  constructor() {
+  constructor(soundController: SoundController) {
     super();
+
+    this._soundController = soundController;
 
     this._collisionManager = new CollisionManager((collision) => {
       this._handleCollision(collision);
@@ -121,13 +125,25 @@ export class GameWorld extends Container3D {
   public onKeyboardAction(action: KeyboardAction): void {
     switch (action) {
       case KeyboardAction.MoveLeft:
-        this._player.moveLeft();
+        const movedLeft = this._player.moveLeft();
+
+        if (movedLeft) {
+          this._soundController.playSfx(SoundId.Move, true);
+        }
         break;
       case KeyboardAction.MoveRight:
-        this._player.moveRight();
+        const movedRight = this._player.moveRight();
+
+        if (movedRight) {
+          this._soundController.playSfx(SoundId.Move, true);
+        }
         break;
       case KeyboardAction.Jump:
-        this._player.jump();
+        const jumped = this._player.jump();
+
+        if (jumped) {
+          this._soundController.playSfx(SoundId.Jump, true);
+        }
         break;
     }
   }
@@ -143,6 +159,7 @@ export class GameWorld extends Container3D {
     switch (collider.layer) {
       case CollisionLayer.Collectible:
         this.onScored.next();
+        this._soundController.playSfx(SoundId.Collect);
         (collider.entity as Collectible).collect(() => {
           this._entityManager.remove(collider.entity);
         });
@@ -151,7 +168,9 @@ export class GameWorld extends Container3D {
         if (collision.side !== CollisionSide.Back) {
           this._reduceSpeed(GAME_SPEED.sideCollisionPenalty);
           (player.entity as Player).collide(true);
+          this._soundController.playSfx(SoundId.Hit, true);
         } else {
+          this._soundController.playSfx(SoundId.Crash);
           this._haltSpeed();
           (player.entity as Player).collide(false, () => {
             this.onHitObstacle.next();

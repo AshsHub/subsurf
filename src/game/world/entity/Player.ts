@@ -219,35 +219,38 @@ export class Player extends DynamicEntity {
     this._applyUfoRotation();
   }
 
-  moveLeft(): void {
+  moveLeft(): boolean {
     if (this.lane <= 0 || this._laneMoving || this._isColliding) {
-      return;
+      return false;
     }
 
     this.setLane((this.lane - 1) as Lane);
     this._animateLaneChange(-1);
+    return true;
   }
 
-  moveRight(): void {
+  moveRight(): boolean {
     if (
       this.lane >= LANE_POSITIONS.length - 1 ||
       this._laneMoving ||
       this._isColliding
     ) {
-      return;
+      return false;
     }
 
     this.setLane((this.lane + 1) as Lane);
     this._animateLaneChange(1);
+    return true;
   }
 
-  jump(): void {
+  jump(): boolean {
     if (this.airborne || this._isColliding) {
-      return;
+      return false;
     }
 
     this.airborne = true;
     this._animateJump();
+    return true;
   }
 
   get currentLane(): Lane {

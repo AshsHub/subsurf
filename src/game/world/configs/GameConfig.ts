@@ -13,7 +13,7 @@ export const GAME_SPEED: GameSpeedConfig = {
 };
 
 export const PICKUP_CONFIG = {
-  pointTarget: 10,
+  pointTarget: 1,
 };
 
 export const COLLECTIBLE_CONFIG = {

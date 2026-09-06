@@ -22,7 +22,7 @@ import { PauseOverlay } from "../ui/overlay/PauseOverlay";
 import { WinOverlay } from "../ui/overlay/WinOverlay";
 import { UIRoot } from "../ui/UIRoot";
 import { GameProgress } from "./GameProgress";
-import { MusicId, SoundController } from "./SoundController";
+import { MusicId, SoundController, SoundId } from "./SoundController";
 import { LocalStorage } from "./StorageController";
 import { GameWorld } from "./world/GameWorld";
 
@@ -48,7 +48,7 @@ export class GameApp {
 
     this._soundController = new SoundController(this._storage);
 
-    this._gameWorld = new GameWorld();
+    this._gameWorld = new GameWorld(this._soundController);
 
     this._gameWorld.onHitObstacle.subscribe((side) => {
       this._gameState.end(GameResult.Lost);
@@ -91,7 +91,7 @@ export class GameApp {
 
     await bootFlow.run();
 
-    await this._soundController.registerMany(MusicId.Menu);
+    await this._soundController.register(MusicId.Menu);
     this._soundController.startMusicOnInteraction(MusicId.Menu);
 
     const canvas = app.view as HTMLCanvasElement;
@@ -120,6 +120,9 @@ export class GameApp {
             },
             onReady: async () => {
               await this._assetLoader.loadBundle("game");
+              await this._soundController.registerMany(
+                ...Object.values(SoundId),
+              );
 
               this.initGame();
             },
@@ -156,6 +159,9 @@ export class GameApp {
               const mute = !this._storage.get("muted");
               this._setMute(mute);
             },
+            onResultReveal: () => {
+              this._soundController.playSfx(SoundId.GameWin);
+            },
             muted,
           }),
       ],
@@ -166,6 +172,9 @@ export class GameApp {
             onContinue: () => {
               this._gameState.reset();
               this._gameState.start();
+            },
+            onResultReveal: () => {
+              this._soundController.playSfx(SoundId.GameLose);
             },
             onToggleMute: () => {
               const mute = !this._storage.get("muted");
@@ -238,6 +247,16 @@ export class GameApp {
   }
 
   private _onGameStateChange({ from, to, result }: GameStateChange): void {
+    if (from === GameState.Idle) {
+      this._soundController.playSfx(SoundId.GameStart);
+    }
+
+    if (to === GameState.Playing) {
+      this._soundController.playMusic(MusicId.Gameplay);
+    } else {
+      this._soundController.playMusic(MusicId.Menu);
+    }
+
     switch (to) {
       case GameState.Playing:
         if (from === GameState.Paused) {
