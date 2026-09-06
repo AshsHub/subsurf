@@ -245,25 +245,14 @@ export class GameWorld extends Container3D {
     const playerFill = new Light();
 
     playerFill.type = LightType.point;
-    playerFill.position.set(-3, 2.5, 1);
-    playerFill.intensity = 18;
-    playerFill.range = 7;
+    playerFill.position.set(0, 10, 5);
+    playerFill.intensity = 1000;
+    playerFill.range = 35;
 
     playerFill.color.r = 0.65;
     playerFill.color.g = 0.8;
     playerFill.color.b = 1;
 
-    const roadLight = new Light();
-
-    roadLight.type = LightType.point;
-    roadLight.position.set(0, 4, -12);
-    roadLight.intensity = 20;
-    roadLight.range = 25;
-
-    roadLight.color.r = 0.75;
-    roadLight.color.g = 0.8;
-    roadLight.color.b = 0.9;
-
-    environment.lights.push(playerKey, playerFill, roadLight);
+    environment.lights.push(playerKey, playerFill);
   }
 }
