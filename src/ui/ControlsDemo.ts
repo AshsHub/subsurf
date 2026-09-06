@@ -48,7 +48,7 @@ export class ControlsDemo extends Container {
     );
 
     this._spaceKey = this._createKey(
-      "SPACE / W",
+      "↑ / SPACE / W",
       this._config.spaceWidth,
       this._config.spaceHeight,
     );

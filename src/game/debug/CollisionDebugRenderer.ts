@@ -16,7 +16,7 @@ export class CollisionDebugRenderer {
   constructor(world: GameWorld, collisionManager: CollisionManager) {
     this._gameWorld = world;
     this._collisionManager = collisionManager;
-    this._registerMaterial();
+    this._registerMaterials();
   }
 
   public set enabled(value: boolean) {
@@ -55,9 +55,11 @@ export class CollisionDebugRenderer {
 
   private _addCollider(collider: Collider): void {
     const material = this._materials.get(collider.layer);
+
     const mesh = Mesh3DCustom.createCube({
       material,
     });
+
     this._gameWorld.addChild(mesh);
     this._boxes.set(collider, mesh);
   }
@@ -76,6 +78,7 @@ export class CollisionDebugRenderer {
     }
 
     mesh.position.set(collider.centerX, collider.centerY, collider.centerZ);
+
     mesh.scale.set(collider.width, collider.height, collider.depth);
   }
 
@@ -83,22 +86,25 @@ export class CollisionDebugRenderer {
     switch (layer) {
       case CollisionLayer.Player:
         return 0x00ff00;
+
       case CollisionLayer.Obstacle:
         return 0xff0000;
+
       default:
         return 0xffffff;
     }
   }
 
-  private _registerMaterial(): void {
+  private _registerMaterials(): void {
     for (const layer of [
       CollisionLayer.Player,
       CollisionLayer.Obstacle,
       CollisionLayer.Collectible,
     ]) {
-      const m = new ColliderDebugMaterial();
-      m.color = this._getColor(layer);
-      this._materials.set(layer, m);
+      const material = new ColliderDebugMaterial();
+      material.color = this._getColor(layer);
+
+      this._materials.set(layer, material);
     }
   }
 
