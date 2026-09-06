@@ -153,7 +153,7 @@ export class EntityManager {
    * have travelled beyond the playable area.
    */
   private _checkObstacles(): void {
-    for (const entity of this.getActiveEntities()) {
+    for (const entity of this._activeEntities) {
       if (entity.position.z > 5) {
         this.remove(entity);
       }
@@ -166,16 +166,8 @@ export class EntityManager {
     }
   }
 
-  public getEntities(): readonly WorldEntity[] {
-    return [...this._entities];
-  }
-
-  public getActiveEntities(): readonly WorldEntity[] {
-    return [...this._activeEntities];
-  }
-
   public clear(): void {
-    for (const entity of this.getEntities()) {
+    for (const entity of this._entities) {
       this.destroy(entity);
     }
 
@@ -188,7 +180,7 @@ export class EntityManager {
   }
 
   public reset(): void {
-    for (const entity of this.getActiveEntities()) {
+    for (const entity of this._activeEntities) {
       this.remove(entity);
     }
   }

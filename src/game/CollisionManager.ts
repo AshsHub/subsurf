@@ -20,6 +20,7 @@ export type CollisionHandler = (collision: CollisionResult) => void;
 export class CollisionManager {
   private readonly _colliders = new Set<Collider>();
   private readonly _onCollision?: CollisionHandler;
+  private readonly _colliderBuffer: Collider[] = [];
 
   constructor(onCollision?: CollisionHandler) {
     this._onCollision = onCollision;
@@ -34,7 +35,13 @@ export class CollisionManager {
   }
 
   public update(): void {
-    const colliders = [...this._colliders];
+    this._colliderBuffer.length = 0;
+
+    for (const collider of this._colliders) {
+      this._colliderBuffer.push(collider);
+    }
+
+    const colliders = this._colliderBuffer;
 
     for (let i = 0; i < colliders.length; i++) {
       const a = colliders[i];
@@ -57,14 +64,17 @@ export class CollisionManager {
         if (!this._intersects(a, b)) {
           continue;
         }
+
         const player = a.layer === CollisionLayer.Player ? a : b;
         const collider = player === a ? b : a;
         const side = this._getCollisionSide(player, collider);
+
         this._onCollision?.({
           player,
           collider,
           side,
         });
+
         return;
       }
     }
@@ -73,11 +83,11 @@ export class CollisionManager {
   private _canCollide(a: Collider, b: Collider): boolean {
     return (
       (a.layer === CollisionLayer.Player &&
-        [CollisionLayer.Obstacle, CollisionLayer.Collectible].includes(
-          b.layer,
-        )) ||
+        (b.layer === CollisionLayer.Obstacle ||
+          b.layer === CollisionLayer.Collectible)) ||
       (b.layer === CollisionLayer.Player &&
-        [CollisionLayer.Obstacle, CollisionLayer.Collectible].includes(a.layer))
+        (a.layer === CollisionLayer.Obstacle ||
+          a.layer === CollisionLayer.Collectible))
     );
   }
 
