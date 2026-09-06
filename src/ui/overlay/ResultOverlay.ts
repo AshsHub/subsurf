@@ -1,228 +1,295 @@
 import gsap from "gsap";
 import { Application, Container, Text } from "pixi.js";
+import { Character } from "../Character";
 import { CollectionProgress } from "../CollectionProgress";
 import { TextButton } from "../TextButton";
 import { IrisRevealBackground } from "./IrisRevealBackground";
 import type { Overlay } from "./Overlay";
+import { DistanceStat } from "../DistanceStat";
 
 export interface ResultOverlayOptions {
   onContinue: () => void;
 }
 
-const BACKGROUND_COLOR = 0xf9edf2;
-
-const TITLE_Y = -150;
-const COLLECTIONS_Y = -50;
-const DISTANCE_Y = 35;
-const BUTTON_Y = 125;
+export interface ResultOverlayMeta {
+  collections: number;
+  collectionTarget: number;
+  distance: number;
+}
 
 export abstract class ResultOverlay extends Container implements Overlay {
+  private static readonly CONFIG = {
+    background: {
+      color: 0xf9edf2,
+    },
+
+    layout: {
+      designWidth: 600,
+      designHeight: 800,
+
+      minScale: 0.7,
+      maxScale: 1,
+
+      titleY: -185,
+      characterY: -70,
+      distanceY: 100,
+      collectionsY: -10,
+      buttonY: 195,
+    },
+
+    title: {
+      fontSize: 64,
+    },
+
+    character: {
+      scale: 1.5,
+      enterScale: 1.25,
+    },
+
+    collections: {
+      target: 10,
+      displayScale: 1.5,
+      incrementDelay: 0.025,
+    },
+
+    button: {
+      width: 240,
+      height: 72,
+    },
+
+    animation: {
+      revealDuration: 0.6,
+      fadeDuration: 0.6,
+      buttonDuration: 0.25,
+      delay: 0.5,
+      ease: "power3.out",
+    },
+  } as const;
+
   protected readonly _background: IrisRevealBackground;
+  protected readonly _contentContainer = new Container();
   protected readonly _title: Text;
+  protected readonly _character: Character;
   protected readonly _collections: CollectionProgress;
-  protected readonly _distance: Text;
+  protected readonly _distanceStat: DistanceStat;
+  protected _collectionValue = 0;
+  protected _distanceTraveled = 0;
   protected readonly _continueButton: TextButton;
 
   constructor(titleText: string, options: ResultOverlayOptions) {
     super();
 
-    this._background = new IrisRevealBackground(BACKGROUND_COLOR);
+    const config = ResultOverlay.CONFIG;
+
+    this._background = new IrisRevealBackground(config.background.color);
 
     this._title = new Text(titleText, {
       fill: 0xffffff,
       fontFamily: "Bungee Regular",
-      fontSize: 64,
+      fontSize: config.title.fontSize,
       fontWeight: "700",
     });
 
     this._title.anchor.set(0.5);
 
-    this._collections = new CollectionProgress(100);
+    this._character = new Character();
+    this._character.scale.set(config.character.scale);
 
-    this._distance = new Text("0.0", {
-      fill: 0xffffff,
-      fontFamily: "Bungee Regular",
-      fontSize: 28,
-      fontWeight: "700",
-      align: "center",
+    this._collections = new CollectionProgress({
+      target: config.collections.target,
+      displayScale: config.collections.displayScale,
     });
 
-    this._distance.anchor.set(0.5);
+    this._distanceStat = new DistanceStat();
 
     this._continueButton = new TextButton({
-      text: "Continue",
-      width: 240,
-      height: 72,
+      text: "Play Again",
+      width: config.button.width,
+      height: config.button.height,
       onClick: options.onContinue,
     });
 
-    this.addChild(
-      this._background,
+    this.addChild(this._background, this._contentContainer);
+
+    this._contentContainer.addChild(
       this._title,
+      this._character,
       this._collections,
-      this._distance,
+      this._distanceStat,
       this._continueButton,
     );
 
     this.eventMode = "static";
   }
 
-  public onEnter(_app: Application, meta?: Record<string, unknown>): void {
-    const collections = meta?.collections;
+  // TODO: fix typing
+  public onEnter(_app: Application, meta?: ResultOverlayMeta): void {
+    const config = ResultOverlay.CONFIG;
+
+    this._collectionValue = meta?.collections ?? 0;
+
     const collectionTarget = meta?.collectionTarget;
-    const distance = meta?.distance;
+
+    this._distanceTraveled = meta?.distance ?? 0;
 
     if (typeof collectionTarget === "number") {
       this._collections.setTarget(collectionTarget);
     }
 
-    if (typeof collections === "number") {
-      this._collections.setValue(collections);
-    }
-
-    this._distance.text =
-      typeof distance === "number" ? distance.toFixed(1) : "0.0";
+    this._distanceStat.set(0);
+    this._distanceStat.alpha = 0;
 
     this._background.revealRatio = 1;
 
-    this._title.visible = true;
-    this._collections.visible = true;
-    this._distance.visible = true;
-    this._continueButton.visible = true;
-    this._background.visible = true;
-
     this.visible = true;
+    this.alpha = 1;
 
-    this._title.alpha = 0;
+    this._contentContainer.alpha = 1;
     this._collections.alpha = 0;
-    this._distance.alpha = 0;
     this._continueButton.alpha = 0;
 
-    this._title.scale.set(0.8);
-    this._collections.scale.set(0.8);
-    this._distance.scale.set(0.8);
-    this._continueButton.scale.set(0.9);
+    this._character.reset();
+    this._character.scale.set(config.character.enterScale);
   }
 
   public onResize(width: number, height: number): void {
     this._background.onResize(width, height);
 
+    const config = ResultOverlay.CONFIG;
+    const layout = config.layout;
+
     const centerX = width / 2;
     const centerY = height / 2;
 
-    this._title.position.set(centerX, centerY + TITLE_Y);
-    this._collections.position.set(centerX, centerY + COLLECTIONS_Y);
-    this._distance.position.set(centerX, centerY + DISTANCE_Y);
-    this._continueButton.position.set(centerX, centerY + BUTTON_Y);
+    const scale = Math.max(
+      layout.minScale,
+      Math.min(
+        layout.maxScale,
+        Math.min(width / layout.designWidth, height / layout.designHeight),
+      ),
+    );
+
+    this._contentContainer.scale.set(scale);
+
+    this._title.position.set(centerX / scale, centerY / scale + layout.titleY);
+
+    this._character.position.set(
+      centerX / scale,
+      centerY / scale + layout.characterY,
+    );
+
+    this._collections.position.set(
+      centerX / scale - this._collections.width / 2,
+      centerY / scale + layout.collectionsY,
+    );
+
+    this._distanceStat.position.set(
+      centerX / scale,
+      centerY / scale + layout.distanceY,
+    );
+
+    this._continueButton.position.set(
+      centerX / scale,
+      centerY / scale + layout.buttonY,
+    );
   }
 
   public async animateIn(): Promise<void> {
-    gsap.killTweensOf([
-      this._title,
-      this._collections,
-      this._distance,
-      this._continueButton,
-    ]);
+    const config = ResultOverlay.CONFIG;
+    const animation = config.animation;
 
-    const timeline = gsap.timeline();
+    this.killTweens();
 
-    timeline
-      .to(this._background, {
-        revealRatio: 0,
-        duration: 0.6,
-        ease: "power3.out",
-      })
-      .to(
-        this._title,
-        {
-          alpha: 1,
-          scale: 1,
-          duration: 0.45,
-          ease: "back.out(1.7)",
-        },
-        "-=0.2",
-      )
-      .to(
-        this._collections,
-        {
-          alpha: 1,
-          scale: 1,
-          duration: 0.4,
-          ease: "back.out(1.5)",
-        },
-        "-=0.2",
-      )
-      .to(
-        this._distance,
-        {
-          alpha: 1,
-          scale: 1,
-          duration: 0.35,
-          ease: "back.out(1.5)",
-        },
-        "-=0.2",
-      )
-      .to(
-        this._continueButton,
-        {
-          alpha: 1,
-          scale: 1,
-          duration: 0.4,
-          ease: "back.out(1.7)",
-        },
-        "-=0.1",
-      );
+    this._title.alpha = 0;
+    this._character.alpha = 0;
+    this._contentContainer.alpha = 1;
 
-    await timeline;
+    await gsap.to(this._background, {
+      revealRatio: 0,
+      duration: animation.revealDuration,
+      ease: animation.ease,
+    });
+
+    gsap.to(this._character, {
+      alpha: 1,
+      duration: animation.fadeDuration,
+      ease: animation.ease,
+    });
+
+    await gsap.to(this._collections, {
+      alpha: 1,
+      ease: animation.ease,
+      delay: animation.delay,
+    });
+
+    await this._collections.animateTo(
+      this._collectionValue,
+      config.collections.incrementDelay,
+    );
+
+    await this._playResultAnimation();
+
+    await gsap.to(this._distanceStat, {
+      alpha: 1,
+      ease: animation.ease,
+      delay: animation.delay,
+    });
+
+    await this._distanceStat.animateTo(this._distanceTraveled);
+
+    gsap.to(this._continueButton, {
+      alpha: 1,
+      duration: animation.buttonDuration,
+      delay: animation.delay,
+      ease: animation.ease,
+    });
   }
 
+  protected abstract _playResultAnimation(): Promise<void>;
+
   public async animateOut(): Promise<void> {
+    const config = ResultOverlay.CONFIG;
+    const animation = config.animation;
+
+    this.killTweens();
+
+    await gsap.to(this._contentContainer, {
+      alpha: 0,
+      duration: animation.fadeDuration,
+      ease: animation.ease,
+    });
+
+    this._character.reset();
+
+    await gsap.to(this._background, {
+      revealRatio: 1,
+      duration: animation.revealDuration,
+      ease: animation.ease,
+    });
+  }
+
+  public killTweens(): void {
     gsap.killTweensOf([
+      this,
+      this._contentContainer,
       this._title,
+      this._character,
       this._collections,
-      this._distance,
+      this._distanceStat,
       this._continueButton,
     ]);
+  }
 
-    const timeline = gsap.timeline();
-
-    timeline
-      .to(this._continueButton, {
-        alpha: 0,
-        scale: 0.9,
-        duration: 0.2,
-        ease: "power2.in",
-      })
-      .to(
-        [this._distance, this._collections],
-        {
-          alpha: 0,
-          scale: 0.9,
-          duration: 0.2,
-          ease: "power2.in",
+  public override destroy(
+    options?:
+      | boolean
+      | {
+          children?: boolean;
+          texture?: boolean;
+          baseTexture?: boolean;
         },
-        "<",
-      )
-      .to(
-        this._title,
-        {
-          alpha: 0,
-          scale: 0.9,
-          duration: 0.2,
-          ease: "power2.in",
-        },
-        "<",
-      )
-      .to(
-        this._background,
-        {
-          revealRatio: 1,
-          duration: 0.6,
-          ease: "power3.in",
-        },
-        "-=0.05",
-      );
-
-    await timeline;
+  ): void {
+    this.killTweens();
+    super.destroy(options);
   }
 }

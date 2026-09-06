@@ -274,7 +274,10 @@ export class Character extends Container {
   }
 
   public celebrate(height = this._config.jumpHeight): gsap.core.Timeline {
-    const timeline = gsap.timeline();
+    const timeline = gsap.timeline({
+      repeat: -1,
+      repeatDelay: 0.5,
+    });
 
     timeline
       .set(this._character, {
@@ -350,6 +353,35 @@ export class Character extends Container {
         rotation: 0,
         duration: 0.15,
         ease: "power2.out",
+      });
+
+    return timeline;
+  }
+
+  public fallOver(): gsap.core.Timeline {
+    const timeline = gsap.timeline();
+
+    const fallenY = -5;
+    const fallenRotation = 1.3;
+
+    timeline
+      .set(this._character, {
+        y: 0,
+        x: 0,
+        rotation: 0,
+      })
+      .to(this._character, {
+        rotation: 0.12,
+        duration: 0.12,
+        ease: "power2.out",
+      })
+      .to(this._character, {
+        y: fallenY,
+        x: 20,
+        rotation: fallenRotation,
+        duration: 0.2,
+        ease: "power3.in",
+        delay: 0.2,
       });
 
     return timeline;

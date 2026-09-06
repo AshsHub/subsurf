@@ -1,11 +1,14 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { TextButton } from "../TextButton";
+import type { Overlay } from "./Overlay";
 
 export interface PauseOverlayOptions {
   onResume: () => void;
 }
 
-export class PauseOverlay extends Container {
+export interface PauseOverlayMeta {}
+
+export class PauseOverlay extends Container implements Overlay {
   private readonly _background: Graphics;
   private readonly _title: Text;
   private readonly _resumeButton: TextButton;

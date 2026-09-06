@@ -6,14 +6,14 @@ export interface GameSpeedConfig {
 }
 
 export const GAME_SPEED: GameSpeedConfig = {
-  initial: 0,
+  initial: 5,
   maximum: 16,
-  acceleration: 0.0000018,
+  acceleration: 0.18,
   sideCollisionPenalty: 3,
 };
 
 export const PICKUP_CONFIG = {
-  pointTarget: 40,
+  pointTarget: 10,
 };
 
 export const COLLECTIBLE_CONFIG = {

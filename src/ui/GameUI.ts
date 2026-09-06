@@ -26,7 +26,10 @@ export class GameUI extends Container implements Resizable {
       animationDuration: 0.15,
     });
 
-    this.collectionProgress = new CollectionProgress(targetCollections);
+    this.collectionProgress = new CollectionProgress({
+      target: targetCollections,
+      displayScale: 1.5,
+    });
     this.controlsDemo = new ControlsDemo();
 
     this.addChild(this.collectionProgress, this.pauseButton, this.controlsDemo);
@@ -62,7 +65,7 @@ export class GameUI extends Container implements Resizable {
   }
 
   public reset(): void {
-    this.collectionProgress.setValue(0);
+    this.collectionProgress.setValue(0, false);
   }
 
   public onResize(width: number, height: number): void {
@@ -71,7 +74,10 @@ export class GameUI extends Container implements Resizable {
       this.pauseButton.height / 2 + UI_PADDING,
     );
 
-    this.collectionProgress.position.set(width / 2, UI_PADDING);
+    this.collectionProgress.position.set(
+      width / 2 - this.collectionProgress.width / 2,
+      UI_PADDING,
+    );
     this.controlsDemo.onResize(width, height);
   }
 }

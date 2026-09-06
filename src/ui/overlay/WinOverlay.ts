@@ -1,6 +1,10 @@
 import gsap from "gsap";
 import { Application } from "pixi.js";
-import { ResultOverlay, type ResultOverlayOptions } from "./ResultOverlay";
+import {
+  ResultOverlay,
+  type ResultOverlayMeta,
+  type ResultOverlayOptions,
+} from "./ResultOverlay";
 
 export class WinOverlay extends ResultOverlay {
   constructor(options: ResultOverlayOptions) {
@@ -9,51 +13,23 @@ export class WinOverlay extends ResultOverlay {
     this._title.style.fill = 0xffd85c;
   }
 
-  public override onEnter(
-    app: Application,
-    meta?: Record<string, unknown>,
-  ): void {
+  public override onEnter(app: Application, meta?: ResultOverlayMeta): void {
     super.onEnter(app, meta);
 
-    this.alpha = 1;
-    this._title.scale.set(0.5);
-    this._collections.scale.set(0.5);
-    this._continueButton.alpha = 0;
+    this._continueButton.setEnabled(false);
   }
 
-  public override async animateIn(): Promise<void> {
-    super.animateIn();
+  protected async _playResultAnimation(): Promise<void> {
+    await gsap.to(this._title, {
+      alpha: 1,
+      duration: 0.5,
+      ease: "power1.inOut",
+    });
 
-    await Promise.all([
-      gsap.to(this._title.scale, {
-        x: 1,
-        y: 1,
-        duration: 0.5,
-        ease: "back.out(1.7)",
-      }),
+    this._character.celebrate().play();
 
-      gsap.to(this._collections.scale, {
-        x: 1,
-        y: 1,
-        duration: 0.5,
-        delay: 0.1,
-        ease: "back.out(1.7)",
-      }),
-
-      gsap.to(this._continueButton, {
-        alpha: 1,
-        duration: 0.3,
-        delay: 0.3,
-      }),
-    ]);
-  }
-
-  public override async animateOut(): Promise<void> {
-    await super.animateOut();
-    await gsap.to(this, {
-      alpha: 0,
-      duration: 0.25,
-      ease: "power2.in",
+    gsap.delayedCall(0.45, () => {
+      this._continueButton.setEnabled(true);
     });
   }
 }

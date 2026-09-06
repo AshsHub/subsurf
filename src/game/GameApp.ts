@@ -252,6 +252,13 @@ export class GameApp {
     ) {
       this._gameUI.hideDemo();
     }
+
+    if (action === KeyboardAction.end_win) {
+      this._gameState.end(GameResult.Won);
+    }
+    if (action === KeyboardAction.end_lose) {
+      this._gameState.end(GameResult.Lost);
+    }
     if (action === KeyboardAction.Pause) {
       if (this._gameState.state === GameState.Paused) {
         this._gameState.resume();
