@@ -1,6 +1,7 @@
 import type { Application, Container } from "pixi.js";
 import { gsap } from "gsap";
 import type { Overlay } from "./Overlay";
+import type { ResultOverlayMeta } from "./ResultOverlay";
 
 const TRANSITION_DURATION = 0.35;
 
@@ -11,12 +12,19 @@ export enum OverlayId {
   EndLost,
 }
 
-export interface OverlayOptions {
+export type OverlayOptions<TMeta = undefined> = {
   immediateTransition?: boolean;
-  meta?: Record<string, unknown>;
-}
+  meta?: TMeta;
+};
 
 export type OverlayFactory = () => Overlay;
+
+interface OverlayMetaMap {
+  [OverlayId.Home]: undefined;
+  [OverlayId.Pause]: undefined;
+  [OverlayId.EndWon]: ResultOverlayMeta;
+  [OverlayId.EndLost]: ResultOverlayMeta;
+}
 
 export class OverlayManager {
   private currentOverlay: Overlay | undefined;
@@ -36,9 +44,9 @@ export class OverlayManager {
     return this.currentOverlayId;
   }
 
-  public async goTo(
-    id: OverlayId | null,
-    options: OverlayOptions = {},
+  public async goTo<TId extends OverlayId>(
+    id: TId | null,
+    options?: OverlayOptions<OverlayMetaMap[TId]>,
   ): Promise<void> {
     const version = ++this.transitionVersion;
 
@@ -52,7 +60,7 @@ export class OverlayManager {
     if (previousOverlay) {
       this._stopTransitionAnimation(previousOverlay);
 
-      if (options.immediateTransition) {
+      if (options?.immediateTransition) {
         previousOverlay.alpha = 0;
       } else if (previousOverlay.animateOut) {
         await previousOverlay.animateOut();
@@ -93,11 +101,11 @@ export class OverlayManager {
     this.currentOverlay = overlay;
     this.currentOverlayId = id;
 
-    overlay.alpha = options.immediateTransition ? 1 : 0;
+    overlay.alpha = options?.immediateTransition ? 1 : 0;
 
     this._parent.addChild(overlay);
 
-    await overlay.onEnter?.(this._app, options.meta);
+    await overlay.onEnter?.(this._app, options?.meta);
     await overlay.onResize?.(this._screenWidth, this._screenHeight);
 
     if (version !== this.transitionVersion) {
@@ -105,7 +113,7 @@ export class OverlayManager {
       return;
     }
 
-    if (options.immediateTransition) {
+    if (options?.immediateTransition) {
       overlay.alpha = 1;
       return;
     }

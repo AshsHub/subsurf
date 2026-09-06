@@ -17,7 +17,10 @@ export interface ResultOverlayMeta {
   distance: number;
 }
 
-export abstract class ResultOverlay extends Container implements Overlay {
+export abstract class ResultOverlay
+  extends Container
+  implements Overlay<ResultOverlayMeta>
+{
   private static readonly CONFIG = {
     background: {
       color: 0xf9edf2,
