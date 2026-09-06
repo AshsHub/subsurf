@@ -3,22 +3,16 @@ import gsap from "gsap";
 
 export interface LogoOptions {
   text?: string;
-
   fontFamily?: string;
   fontSize?: number;
   fill?: string | number;
-
   stroke?: string | number;
   strokeThickness?: number;
-
   letterSpacing?: number;
   characterSpacing?: number;
-
   animation?: LogoAnimation;
-
   animationDuration?: number;
   animationDelay?: number;
-
   x?: number;
   y?: number;
 }
@@ -500,76 +494,6 @@ export class Logo extends Container {
     });
 
     return this;
-  }
-
-  /**
-   * Throws each letter upward and outward with gravity.
-   */
-  public async explodeOnce(): Promise<void> {
-    this.killAnimation();
-
-    const timeline = gsap.timeline();
-
-    this.letters.forEach((letter) => {
-      const base = this.basePositions.get(letter);
-
-      if (!base) {
-        return;
-      }
-
-      const direction = Math.random() < 0.5 ? -1 : 1;
-
-      const velocityX = direction * (120 + Math.random() * 180);
-      const velocityY = -(300 + Math.random() * 180);
-      const gravity = 700 + Math.random() * 200;
-
-      const rotationVelocity = (Math.random() - 0.5) * 10;
-
-      const duration = 0.8 + Math.random() * 0.3;
-
-      letter.x = base.x;
-      letter.y = base.y;
-      letter.rotation = 0;
-      letter.alpha = 1;
-      letter.scale.set(1);
-
-      const state = { time: 0 };
-
-      timeline.to(
-        state,
-        {
-          time: duration,
-          duration,
-          ease: "none",
-
-          onUpdate: () => {
-            const t = state.time;
-            letter.x = base.x + velocityX * t;
-            letter.y = base.y + velocityY * t + 0.5 * gravity * t * t;
-            letter.rotation = rotationVelocity * t;
-            const fadeStart = 0.65;
-
-            if (t > duration * fadeStart) {
-              const fadeProgress =
-                (t - duration * fadeStart) / (duration * (1 - fadeStart));
-              letter.alpha = 1 - fadeProgress;
-              const scale = 1 - fadeProgress * 0.8;
-              letter.scale.set(scale);
-            }
-          },
-
-          onComplete: () => {
-            letter.alpha = 0;
-            letter.scale.set(0);
-          },
-        },
-        0,
-      );
-    });
-
-    await new Promise<void>((resolve) => {
-      timeline.eventCallback("onComplete", resolve);
-    });
   }
 
   override destroy(

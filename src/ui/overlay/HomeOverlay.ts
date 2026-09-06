@@ -13,7 +13,7 @@ const BACKGROUND_COLOR = 0xf9edf2;
 
 export class HomeOverlay extends Container implements Overlay {
   private readonly startButton: TextButton;
-  private readonly logo: Logo;
+  private readonly _logo: Logo;
   private readonly content: Container;
   private readonly background: IrisRevealBackground;
 
@@ -24,7 +24,7 @@ export class HomeOverlay extends Container implements Overlay {
 
     this.content = new Container();
 
-    this.logo = new Logo({
+    this._logo = new Logo({
       text: "SubSurf",
       fontFamily: "Bungee Regular",
       fontSize: 120,
@@ -41,14 +41,14 @@ export class HomeOverlay extends Container implements Overlay {
       text: "Start",
       onClick: options.onRequestStart,
       onPointerEnter: () => {
-        this.logo.animation = "pop";
+        this._logo.animation = "pop";
       },
       onPointerLeave: () => {
-        this.logo.animation = "wave";
+        this._logo.animation = "wave";
       },
     });
 
-    this.content.addChild(this.logo, this.startButton);
+    this.content.addChild(this._logo, this.startButton);
 
     this.addChild(this.background, this.content);
 
@@ -58,12 +58,12 @@ export class HomeOverlay extends Container implements Overlay {
   public onEnter(_app: Application): void {
     this.background.visible = true;
     this.content.visible = true;
-    this.logo.alpha = 1;
+    this._logo.alpha = 1;
     this.startButton.alpha = 1;
   }
 
   public async animateOut(): Promise<void> {
-    this.logo.stopAnimation();
+    this._logo.stopAnimation();
 
     await Promise.all([
       gsap.to(this.startButton, {
@@ -78,11 +78,11 @@ export class HomeOverlay extends Container implements Overlay {
       }),
     ]);
 
-    await new Promise<void>((resolve) => {
-      gsap.delayedCall(1, async () => {
-        await this.logo.explodeOnce();
-        resolve();
-      });
+    await gsap.to(this._logo, {
+      alpha: 0,
+      duration: 0.2,
+      ease: "power3.out",
+      delay: 2,
     });
 
     this.background.visible = false;
@@ -92,7 +92,7 @@ export class HomeOverlay extends Container implements Overlay {
     this.background.onResize(width, height);
     const gap = 40;
 
-    this.startButton.position.set(0, this.logo.height + gap);
+    this.startButton.position.set(0, this._logo.height + gap);
 
     const bounds = this.content.getLocalBounds();
     const maxWidth = width * 0.9;

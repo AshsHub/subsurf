@@ -10,7 +10,7 @@ export class WinOverlay extends ResultOverlay {
   constructor(options: ResultOverlayOptions) {
     super("YOU WIN!", options);
 
-    this._title.style.fill = 0xffd85c;
+    this._title.style.fill = 0xe8b52f;
   }
 
   public override onEnter(app: Application, meta?: ResultOverlayMeta): void {
