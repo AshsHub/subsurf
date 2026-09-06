@@ -70,8 +70,6 @@ export class OverlayManager {
     }
 
     if (previousOverlay) {
-      this._stopTransitionAnimation(previousOverlay);
-
       const previousPriority =
         previousOverlayId === undefined
           ? 0
@@ -80,8 +78,11 @@ export class OverlayManager {
       const nextPriority = id === null ? 0 : (registration?.priority ?? 0);
 
       const shouldInterrupt = nextPriority > previousPriority;
+      const shouldSkipAnimation =
+        options?.immediateTransition || shouldInterrupt;
 
-      if (options?.immediateTransition || shouldInterrupt) {
+      if (shouldSkipAnimation) {
+        this._stopTransitionAnimation(previousOverlay);
         previousOverlay.alpha = 0;
         this._removeOverlay(previousOverlay);
       } else if (previousOverlay.animateOut) {

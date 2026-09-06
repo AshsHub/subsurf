@@ -10,16 +10,8 @@
       ]
     },
     {
-      "name": "loading",
-      "assets": []
-    },
-    {
       "name": "home",
       "assets": [
-        {
-          "alias": "game-start",
-          "src": "/assets/home/audio/game-start.wav"
-        },
         {
           "alias": "menu-music",
           "src": "/assets/home/audio/menu-music.mp3"
@@ -48,6 +40,10 @@
         {
           "alias": "game-lose",
           "src": "/assets/game/audio/game-lose.mp3"
+        },
+        {
+          "alias": "game-start",
+          "src": "/assets/game/audio/game-start.mp3"
         },
         {
           "alias": "game-win",

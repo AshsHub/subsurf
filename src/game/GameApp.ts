@@ -1,4 +1,4 @@
-import { Application } from "pixi.js";
+import { Application, Container } from "pixi.js";
 
 import {
   GameResult,
@@ -8,7 +8,7 @@ import {
 } from "./GameState";
 
 import { KeyboardAction, KeyboardInput } from "../input/KeyboardInput";
-import { AssetLoader } from "../loading/AssetLoader";
+import { ASSET_BUNDLES, AssetLoader } from "../loading/AssetLoader";
 import { BootFlow } from "../loading/BootFlow";
 import { GameUI } from "../ui/GameUI";
 import { HomeOverlay } from "../ui/overlay/HomeOverlay";
@@ -21,7 +21,6 @@ import {
 } from "../ui/overlay/OverlayManager";
 import { PauseOverlay } from "../ui/overlay/PauseOverlay";
 import { WinOverlay } from "../ui/overlay/WinOverlay";
-import { UIRoot } from "../ui/UIRoot";
 import { GameProgress } from "./GameProgress";
 import { MusicId, SoundController, SoundId } from "./SoundController";
 import { LocalStorage } from "./StorageController";
@@ -29,18 +28,20 @@ import { GameWorld } from "./world/GameWorld";
 
 export class GameApp {
   private _app: Application | undefined;
+  private _gameContainer = new Container();
+  private _uiContainer = new Container();
   private _storage: LocalStorage;
   private _soundController: SoundController;
 
   private _gameUI!: GameUI;
   private _overlayManager!: OverlayManager;
 
-  private _uiRoot: UIRoot;
   private readonly _gameState = new GameStateManager();
   private readonly _assetLoader = new AssetLoader();
   private readonly _keyboard = new KeyboardInput();
   private readonly _gameProgress = new GameProgress();
   private readonly _gameWorld: GameWorld;
+  private _gameInitialised = false;
 
   constructor() {
     this._storage = new LocalStorage({
@@ -62,8 +63,6 @@ export class GameApp {
     this._gameState.onChange((stateChange) => {
       this._onGameStateChange(stateChange);
     });
-
-    this._uiRoot = new UIRoot();
   }
 
   public async init(): Promise<void> {
@@ -86,15 +85,6 @@ export class GameApp {
       this._gameProgress.addDistance(this._gameWorld.speed * deltaTime);
     });
 
-    await this._assetLoader.init();
-
-    const bootFlow = new BootFlow(app, this._assetLoader);
-
-    await bootFlow.run();
-
-    await this._soundController.register(MusicId.Menu);
-    this._soundController.startMusicOnInteraction(MusicId.Menu);
-
     const canvas = app.view as HTMLCanvasElement;
 
     canvas.style.display = "block";
@@ -109,6 +99,11 @@ export class GameApp {
 
     this._app = app;
 
+    app.stage.addChild(this._gameContainer, this._uiContainer);
+    const bootFlow = new BootFlow(app, this._assetLoader);
+
+    await bootFlow.run();
+
     const muted = this._storage.get("muted");
 
     const overlayFactories = new Map<OverlayId, OverlayRegistration>([
@@ -118,14 +113,8 @@ export class GameApp {
           factory: () =>
             new HomeOverlay({
               onRequestStart: () => {
-                this._gameState.start();
-              },
-              onReady: async () => {
-                await this._assetLoader.loadBundle("game");
-                await this._soundController.registerMany(
-                  ...Object.values(SoundId),
-                );
                 this.initGame();
+                this._gameState.start();
               },
               onToggleMute: () => {
                 const mute = !this._storage.get("muted");
@@ -183,14 +172,13 @@ export class GameApp {
                 this._gameState.reset();
                 this._gameState.start();
               },
+              onResultReveal: () => {
+                this._soundController.playSfx(SoundId.GameLose);
+              },
               onToggleMute: () => {
                 const mute = !this._storage.get("muted");
                 this._setMute(mute);
               },
-              onResultReveal: () => {
-                this._soundController.playSfx(SoundId.GameLose);
-              },
-
               muted,
             }),
 
@@ -200,9 +188,14 @@ export class GameApp {
     ]);
 
     this._overlayManager = new OverlayManager(
-      this._app,
-      this._uiRoot,
+      app,
+      this._uiContainer,
       overlayFactories,
+    );
+
+    this._overlayManager.onResize(
+      this._app.screen.width,
+      this._app.screen.height,
     );
 
     await this._overlayManager.goTo(OverlayId.Home, {
@@ -210,21 +203,49 @@ export class GameApp {
     });
 
     this.initListeners();
+    this.loadBackgroundAssets();
+  }
+
+  private async loadBackgroundAssets(): Promise<void> {
+    try {
+      await this._assetLoader.loadBundle(ASSET_BUNDLES.game);
+      console.log("GAME BUNDLE LOADED");
+
+      console.log("Registering menu music...");
+      await this._soundController.register(MusicId.Menu);
+      console.log("Menu music OK");
+
+      for (const soundId of Object.values(SoundId)) {
+        console.log("Registering:", soundId);
+        await this._soundController.register(soundId);
+        console.log("OK:", soundId);
+      }
+
+      console.log("Registering gameplay music...");
+      await this._soundController.register(MusicId.Gameplay);
+      console.log("Gameplay music OK");
+
+      this._soundController.startMusicOnInteraction(MusicId.Menu);
+    } catch (error) {
+      console.error("Failed to load background assets", error);
+    }
   }
 
   public initGame(): void {
+    if (this._gameInitialised) {
+      return;
+    }
+    this._gameInitialised = true;
     this.setupScene();
 
-    this._gameUI = new GameUI(() => {
-      this._gameState.pause();
-    }, this._gameProgress.collectionTarget);
+    this._gameUI = new GameUI(
+      () => this._gameState.pause(),
+      this._gameProgress.collectionTarget,
+    );
 
-    this._gameUI.hide();
-    this._uiRoot.addChild(this._gameUI);
-
-    this._app?.stage.addChild(this._uiRoot);
-
+    this._uiContainer.addChild(this._gameUI);
     this._keyboard.onAction(this._onKeyboardAction);
+
     this._handleResize();
   }
 
@@ -243,7 +264,7 @@ export class GameApp {
     }
 
     this._gameWorld.init();
-    this._app.stage.addChild(this._gameWorld);
+    this._gameContainer.addChild(this._gameWorld);
   }
 
   private addPoint(): void {
@@ -260,7 +281,11 @@ export class GameApp {
     this._gameUI.reset();
   }
 
-  private _onGameStateChange({ from, to, result }: GameStateChange): void {
+  private async _onGameStateChange({
+    from,
+    to,
+    result,
+  }: GameStateChange): Promise<void> {
     if (from === GameState.Idle) {
       this._soundController.playSfx(SoundId.GameStart);
     }
@@ -281,19 +306,20 @@ export class GameApp {
         }
 
         this._gameUI.show();
-        this._overlayManager.goTo(null);
+        await this._overlayManager.goTo(null);
         break;
 
       case GameState.Paused:
         this._gameWorld.pause();
-        void this._overlayManager.goTo(OverlayId.Pause);
         this._gameUI.hide();
+        await this._overlayManager.goTo(OverlayId.Pause);
         break;
 
       case GameState.Ended:
         this._gameWorld.end();
         this._gameUI.hide();
-        void this._overlayManager.goTo(
+
+        await this._overlayManager.goTo(
           result === GameResult.Won ? OverlayId.EndWon : OverlayId.EndLost,
           {
             meta: { ...this._gameProgress.getStats() },

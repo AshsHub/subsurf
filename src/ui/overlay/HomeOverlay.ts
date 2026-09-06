@@ -10,7 +10,6 @@ export interface HomeOverlayOptions {
   onRequestStart: () => void;
   onToggleMute: () => void;
   muted: boolean;
-  onReady: () => void;
 }
 
 export class HomeOverlay extends Container implements Overlay {
@@ -27,7 +26,6 @@ export class HomeOverlay extends Container implements Overlay {
   private readonly _logo: Logo;
   private readonly content: Container;
   private readonly background: IrisRevealBackground;
-  private readonly _onReady: () => void;
   private readonly _onToggleMute: () => void;
 
   constructor(options: HomeOverlayOptions) {
@@ -39,7 +37,6 @@ export class HomeOverlay extends Container implements Overlay {
 
     this.content = new Container();
 
-    this._onReady = options.onReady;
     this._onToggleMute = options.onToggleMute;
 
     this._logo = new Logo({
@@ -94,11 +91,10 @@ export class HomeOverlay extends Container implements Overlay {
     this._logo.alpha = 1;
     this.startButton.alpha = 1;
     this.muteButton.alpha = 1;
-
-    this._onReady();
   }
 
   public async animateOut(): Promise<void> {
+    debugger;
     this._logo.stopAnimation();
 
     await Promise.all([
