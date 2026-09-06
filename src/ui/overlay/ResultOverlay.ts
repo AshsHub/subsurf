@@ -91,6 +91,8 @@ export abstract class ResultOverlay
       fontFamily: "Bungee Regular",
       fontSize: config.title.fontSize,
       fontWeight: "700",
+      stroke: "0xffffff",
+      strokeThickness: 5,
     });
 
     this._title.anchor.set(0.5);

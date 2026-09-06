@@ -26,6 +26,7 @@ import type { Collectible } from "./entity/Collectible";
 import { Obstacle } from "./entity/Obstacle";
 import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
+import { GameplayCamera } from "./CameraController";
 
 export class GameWorld extends Container3D {
   public onHitObstacle: Subject<void> = new Subject<void>();
@@ -39,6 +40,7 @@ export class GameWorld extends Container3D {
 
   private _track!: Track;
   private _player!: Player;
+  private _camera!: GameplayCamera;
 
   private _speed = GAME_SPEED.initial;
   private _incrementSpeed = true;
@@ -70,6 +72,8 @@ export class GameWorld extends Container3D {
     this._track = this._entityManager.add(Track.create());
     this._player = this._entityManager.add(Player.create());
 
+    this._camera = new GameplayCamera(this._player);
+
     await this.setupSkybox();
     this.setupLighting();
   }
@@ -77,6 +81,7 @@ export class GameWorld extends Container3D {
   public start(): void {
     this._speed = GAME_SPEED.initial;
     this._player.reset();
+    this._camera.reset();
     this._entityManager.reset();
     this._spawnManager.reset();
     this._spawnManager.start();
@@ -110,6 +115,7 @@ export class GameWorld extends Container3D {
     this._spawnManager.update(deltaTime, this._speed);
     this._collisionManager.update();
     this._collisionDebug.update();
+    this._camera.update(deltaTime);
   }
 
   public onKeyboardAction(action: KeyboardAction): void {

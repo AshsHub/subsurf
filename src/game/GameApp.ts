@@ -1,5 +1,4 @@
 import { Application } from "pixi.js";
-import { CameraOrbitControl } from "pixi3d/pixi7";
 
 import {
   GameResult,
@@ -174,12 +173,7 @@ export class GameApp {
     }
 
     this._gameWorld.init();
-
     this._app.stage.addChild(this._gameWorld);
-
-    const control = new CameraOrbitControl(this._app.view as HTMLCanvasElement);
-
-    control.angles.x = 25;
   }
 
   private addPoint(): void {

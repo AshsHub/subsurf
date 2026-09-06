@@ -25,7 +25,7 @@ export class HomeOverlay extends Container implements Overlay {
     this.content = new Container();
 
     this._logo = new Logo({
-      text: "SubSurf",
+      text: "Astro Rush",
       fontFamily: "Bungee Regular",
       fontSize: 120,
       fill: 0xffd900,
