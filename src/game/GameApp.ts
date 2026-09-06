@@ -103,6 +103,11 @@ export class GameApp {
             onRequestStart: () => {
               this._gameState.start();
             },
+            onReady: () => {
+              this._assetLoader.loadBundle("game").then(() => {
+                this.initGame();
+              });
+            },
           }),
       ],
       [
@@ -146,6 +151,10 @@ export class GameApp {
       immediateTransition: true,
     });
 
+    this.initListeners();
+  }
+
+  public initGame(): void {
     this.setupScene();
 
     this._gameUI = new GameUI(() => {
@@ -155,11 +164,9 @@ export class GameApp {
     this._gameUI.hide();
     this._uiRoot.addChild(this._gameUI);
 
-    app.stage.addChild(this._uiRoot);
+    this._app?.stage.addChild(this._uiRoot);
 
     this._keyboard.onAction(this._onKeyboardAction);
-
-    this.initListeners();
     this._handleResize();
   }
 

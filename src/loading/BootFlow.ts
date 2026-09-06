@@ -21,12 +21,7 @@ export class BootFlow {
     let lastProgress = 0;
 
     const loadPromise = this.assetLoader.loadBundle(
-      [
-        ASSET_BUNDLES.fonts,
-        ASSET_BUNDLES.loading,
-        ASSET_BUNDLES.home,
-        ASSET_BUNDLES["game-core"],
-      ],
+      [ASSET_BUNDLES.fonts, ASSET_BUNDLES.loading, ASSET_BUNDLES.home],
       (progress) => {
         lastProgress = progress;
         loadingScene?.setProgress(progress);

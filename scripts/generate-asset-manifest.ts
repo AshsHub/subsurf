@@ -4,7 +4,7 @@ import path from "node:path";
 const ASSETS_DIR = path.resolve("public/assets");
 const MANIFEST_PATH = path.resolve("public/assets/manifest.json");
 
-const BUNDLES = ["fonts", "loading", "home", "game-core", "game-full"];
+const BUNDLES = ["fonts", "loading", "home", "game"];
 
 interface PixiAsset {
   alias: string;

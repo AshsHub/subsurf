@@ -18,53 +18,49 @@
       "assets": []
     },
     {
-      "name": "game-core",
+      "name": "game",
       "assets": [
         {
           "alias": "player-body-texture",
-          "src": "/assets/game-core/player-body-texture.jpg"
+          "src": "/assets/game/player-body-texture.jpg"
         },
         {
           "alias": "player-cockpit-texture",
-          "src": "/assets/game-core/player-cockpit-texture.jpg"
+          "src": "/assets/game/player-cockpit-texture.jpg"
         },
         {
           "alias": "player-engine-texture",
-          "src": "/assets/game-core/player-engine-texture.jpg"
+          "src": "/assets/game/player-engine-texture.jpg"
         },
         {
           "alias": "road-texture",
-          "src": "/assets/game-core/road-texture.png"
+          "src": "/assets/game/road-texture.png"
         },
         {
           "alias": "back",
-          "src": "/assets/game-core/skybox/back.png"
+          "src": "/assets/game/skybox/back.png"
         },
         {
           "alias": "bottom",
-          "src": "/assets/game-core/skybox/bottom.png"
+          "src": "/assets/game/skybox/bottom.png"
         },
         {
           "alias": "front",
-          "src": "/assets/game-core/skybox/front.png"
+          "src": "/assets/game/skybox/front.png"
         },
         {
           "alias": "left",
-          "src": "/assets/game-core/skybox/left.png"
+          "src": "/assets/game/skybox/left.png"
         },
         {
           "alias": "right",
-          "src": "/assets/game-core/skybox/right.png"
+          "src": "/assets/game/skybox/right.png"
         },
         {
           "alias": "top",
-          "src": "/assets/game-core/skybox/top.png"
+          "src": "/assets/game/skybox/top.png"
         }
       ]
-    },
-    {
-      "name": "game-full",
-      "assets": []
     }
   ]
 }

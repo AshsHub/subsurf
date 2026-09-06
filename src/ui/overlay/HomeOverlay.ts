@@ -7,6 +7,7 @@ import { IrisRevealBackground } from "./IrisRevealBackground";
 
 export interface HomeOverlayOptions {
   onRequestStart: () => void;
+  onReady: () => void;
 }
 
 const BACKGROUND_COLOR = 0xf9edf2;
@@ -16,12 +17,12 @@ export class HomeOverlay extends Container implements Overlay {
   private readonly _logo: Logo;
   private readonly content: Container;
   private readonly background: IrisRevealBackground;
+  private readonly _onReady: () => void;
 
   constructor(options: HomeOverlayOptions) {
     super();
 
     this.background = new IrisRevealBackground(BACKGROUND_COLOR);
-
     this.content = new Container();
 
     this._logo = new Logo({
@@ -49,10 +50,10 @@ export class HomeOverlay extends Container implements Overlay {
     });
 
     this.content.addChild(this._logo, this.startButton);
-
     this.addChild(this.background, this.content);
-
     this.eventMode = "static";
+
+    this._onReady = options.onReady;
   }
 
   public onEnter(_app: Application): void {
@@ -60,6 +61,7 @@ export class HomeOverlay extends Container implements Overlay {
     this.content.visible = true;
     this._logo.alpha = 1;
     this.startButton.alpha = 1;
+    this._onReady();
   }
 
   public async animateOut(): Promise<void> {

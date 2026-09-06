@@ -50,6 +50,7 @@ class Pool<T extends Poolable> implements IPool {
 }
 
 export class EntityPool {
+  public static InitialPool = 5;
   private readonly _pools = new Map<POOL_ID, IPool>();
 
   register<T extends Poolable>(

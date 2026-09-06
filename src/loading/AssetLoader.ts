@@ -6,8 +6,7 @@ export const ASSET_BUNDLES = {
   fonts: "fonts",
   loading: "loading",
   home: "home",
-  "game-core": "game-core",
-  "game-full": "game-full",
+  game: "game",
 } as const;
 
 export class AssetLoader {
