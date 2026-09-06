@@ -98,7 +98,6 @@ export class HomeOverlay extends Container implements Overlay {
   }
 
   public async animateOut(): Promise<void> {
-    debugger;
     this._logo.stopAnimation();
 
     await Promise.all([
