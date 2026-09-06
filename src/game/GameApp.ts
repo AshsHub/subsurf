@@ -211,21 +211,13 @@ export class GameApp {
   private async loadBackgroundAssets(): Promise<void> {
     try {
       await this._assetLoader.loadBundle(ASSET_BUNDLES.game);
-      console.log("GAME BUNDLE LOADED");
-
-      console.log("Registering menu music...");
       await this._soundController.register(MusicId.Menu);
-      console.log("Menu music OK");
 
       for (const soundId of Object.values(SoundId)) {
-        console.log("Registering:", soundId);
         await this._soundController.register(soundId);
-        console.log("OK:", soundId);
       }
 
-      console.log("Registering gameplay music...");
       await this._soundController.register(MusicId.Gameplay);
-      console.log("Gameplay music OK");
 
       this._soundController.startMusicOnInteraction(MusicId.Menu);
     } catch (error) {
