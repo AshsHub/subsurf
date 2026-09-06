@@ -1,4 +1,4 @@
-import { Container, Graphics, Text } from "pixi.js";
+import { Assets, Container, Graphics, Sprite } from "pixi.js";
 import gsap from "gsap";
 import { Character } from "./Character";
 
@@ -19,6 +19,8 @@ export class ControlsDemo extends Container {
 
     characterMove: 64,
     characterSpeed: 140,
+
+    iconPadding: 14,
   };
 
   private readonly _controlsContainer: Container;
@@ -36,19 +38,19 @@ export class ControlsDemo extends Container {
     this._controlsContainer = new Container();
 
     this._leftKey = this._createKey(
-      "←/ A",
+      "icon-arrow-left",
       this._config.keyWidth,
       this._config.keyHeight,
     );
 
     this._rightKey = this._createKey(
-      "→/ D",
+      "icon-arrow-right",
       this._config.keyWidth,
       this._config.keyHeight,
     );
 
     this._spaceKey = this._createKey(
-      "↑ / SPACE / W",
+      "icon-space-bar",
       this._config.spaceWidth,
       this._config.spaceHeight,
     );
@@ -156,7 +158,6 @@ export class ControlsDemo extends Container {
           y: scaleY,
           duration: 0.15,
           ease: "power2.out",
-
           onStart: action,
         },
         `+=${delay}`,
@@ -221,7 +222,11 @@ export class ControlsDemo extends Container {
     this._timeline.repeat(-1);
   }
 
-  private _createKey(label: string, width: number, height: number): Container {
+  private _createKey(
+    textureAlias: string,
+    width: number,
+    height: number,
+  ): Container {
     const key = new Container();
 
     const shadow = new Graphics();
@@ -237,17 +242,31 @@ export class ControlsDemo extends Container {
     body.drawRoundedRect(0, 0, width, height, this._config.keyRadius);
     body.endFill();
 
-    const text = new Text(label, {
-      fontFamily: "Bungee Regular",
-      fontSize: label.includes("SPACE") ? 16 : 30,
-      fill: 0xffffff,
-      align: "center",
-    });
+    const texture = Assets.get(textureAlias);
 
-    text.anchor.set(0.5);
-    text.position.set(width / 2, height / 2);
+    if (!texture) {
+      throw new Error(
+        `Control icon texture "${textureAlias}" has not been loaded.`,
+      );
+    }
 
-    key.addChild(shadow, body, text);
+    const icon = new Sprite(texture);
+
+    icon.anchor.set(0.5);
+    icon.position.set(width / 2, height / 2);
+
+    // Keep the icon inside the key while preserving its aspect ratio.
+    const maxWidth = width - this._config.iconPadding * 2;
+    const maxHeight = height - this._config.iconPadding * 2;
+
+    const scale = Math.min(
+      maxWidth / icon.texture.width,
+      maxHeight / icon.texture.height,
+    );
+
+    icon.scale.set(scale);
+
+    key.addChild(shadow, body, icon);
 
     key.pivot.set(width / 2, height / 2);
 

@@ -22,10 +22,14 @@ import { PauseOverlay } from "../ui/overlay/PauseOverlay";
 import { WinOverlay } from "../ui/overlay/WinOverlay";
 import { UIRoot } from "../ui/UIRoot";
 import { GameProgress } from "./GameProgress";
+import { MusicId, SoundController } from "./SoundController";
+import { LocalStorage } from "./StorageController";
 import { GameWorld } from "./world/GameWorld";
 
 export class GameApp {
   private _app: Application | undefined;
+  private _storage: LocalStorage;
+  private _soundController: SoundController;
 
   private _gameUI!: GameUI;
   private _overlayManager!: OverlayManager;
@@ -38,6 +42,12 @@ export class GameApp {
   private readonly _gameWorld: GameWorld;
 
   constructor() {
+    this._storage = new LocalStorage({
+      muted: false,
+    });
+
+    this._soundController = new SoundController(this._storage);
+
     this._gameWorld = new GameWorld();
 
     this._gameWorld.onHitObstacle.subscribe((side) => {
@@ -81,6 +91,9 @@ export class GameApp {
 
     await bootFlow.run();
 
+    await this._soundController.registerMany(MusicId.Menu);
+    this._soundController.startMusicOnInteraction(MusicId.Menu);
+
     const canvas = app.view as HTMLCanvasElement;
 
     canvas.style.display = "block";
@@ -95,6 +108,8 @@ export class GameApp {
 
     this._app = app;
 
+    const muted = this._storage.get("muted");
+
     const overlayFactories = new Map<OverlayId, OverlayFactory>([
       [
         OverlayId.Home,
@@ -103,11 +118,16 @@ export class GameApp {
             onRequestStart: () => {
               this._gameState.start();
             },
-            onReady: () => {
-              this._assetLoader.loadBundle("game").then(() => {
-                this.initGame();
-              });
+            onReady: async () => {
+              await this._assetLoader.loadBundle("game");
+
+              this.initGame();
             },
+            onToggleMute: () => {
+              const mute = !this._storage.get("muted");
+              this._setMute(mute);
+            },
+            muted,
           }),
       ],
       [
@@ -117,6 +137,11 @@ export class GameApp {
             onResume: () => {
               this._gameState.resume();
             },
+            onToggleMute: () => {
+              const mute = !this._storage.get("muted");
+              this._setMute(mute);
+            },
+            muted,
           }),
       ],
       [
@@ -127,6 +152,11 @@ export class GameApp {
               this._gameState.reset();
               this._gameState.start();
             },
+            onToggleMute: () => {
+              const mute = !this._storage.get("muted");
+              this._setMute(mute);
+            },
+            muted,
           }),
       ],
       [
@@ -137,6 +167,11 @@ export class GameApp {
               this._gameState.reset();
               this._gameState.start();
             },
+            onToggleMute: () => {
+              const mute = !this._storage.get("muted");
+              this._setMute(mute);
+            },
+            muted,
           }),
       ],
     ]);
@@ -168,6 +203,11 @@ export class GameApp {
 
     this._keyboard.onAction(this._onKeyboardAction);
     this._handleResize();
+  }
+
+  private _setMute(mute: boolean): void {
+    this._storage.set("muted", mute);
+    this._soundController.setMuted(mute);
   }
 
   private initListeners(): void {

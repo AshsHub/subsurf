@@ -15,11 +15,40 @@
     },
     {
       "name": "home",
-      "assets": []
+      "assets": [
+        {
+          "alias": "icon-mute",
+          "src": "/assets/home/icon-mute.png"
+        },
+        {
+          "alias": "icon-unmute",
+          "src": "/assets/home/icon-unmute.png"
+        },
+        {
+          "alias": "menu-music",
+          "src": "/assets/home/menu-music.mp3"
+        }
+      ]
     },
     {
       "name": "game",
       "assets": [
+        {
+          "alias": "icon-arrow-left",
+          "src": "/assets/game/icon-arrow-left.png"
+        },
+        {
+          "alias": "icon-arrow-right",
+          "src": "/assets/game/icon-arrow-right.png"
+        },
+        {
+          "alias": "icon-pause",
+          "src": "/assets/game/icon-pause.png"
+        },
+        {
+          "alias": "icon-space-bar",
+          "src": "/assets/game/icon-space-bar.png"
+        },
         {
           "alias": "player-body-texture",
           "src": "/assets/game/player-body-texture.jpg"

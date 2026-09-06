@@ -1,14 +1,17 @@
 import gsap from "gsap";
-import { Application, Container, Text } from "pixi.js";
+import { Application, Assets, Container, Text } from "pixi.js";
 import { Character } from "../Character";
 import { CollectionProgress } from "../CollectionProgress";
 import { TextButton } from "../TextButton";
 import { IrisRevealBackground } from "./IrisRevealBackground";
 import type { Overlay } from "./Overlay";
 import { DistanceStat } from "../DistanceStat";
+import { IconButton } from "../IconButton";
 
 export interface ResultOverlayOptions {
   onContinue: () => void;
+  onToggleMute: () => void;
+  muted: boolean;
 }
 
 export interface ResultOverlayMeta {
@@ -60,6 +63,12 @@ export abstract class ResultOverlay
       height: 72,
     },
 
+    mute: {
+      width: 56,
+      height: 56,
+      padding: 20,
+    },
+
     animation: {
       revealDuration: 0.6,
       fadeDuration: 0.6,
@@ -75,14 +84,20 @@ export abstract class ResultOverlay
   protected readonly _character: Character;
   protected readonly _collections: CollectionProgress;
   protected readonly _distanceStat: DistanceStat;
+  protected readonly _continueButton: TextButton;
+  protected readonly _muteButton: IconButton;
+
   protected _collectionValue = 0;
   protected _distanceTraveled = 0;
-  protected readonly _continueButton: TextButton;
+
+  private readonly _onToggleMute: () => void;
 
   constructor(titleText: string, options: ResultOverlayOptions) {
     super();
 
     const config = ResultOverlay.CONFIG;
+
+    this._onToggleMute = options.onToggleMute;
 
     this._background = new IrisRevealBackground(config.background.color);
 
@@ -114,7 +129,20 @@ export abstract class ResultOverlay
       onClick: options.onContinue,
     });
 
-    this.addChild(this._background, this._contentContainer);
+    this._muteButton = new IconButton({
+      icons: {
+        on: Assets.get("icon-mute"),
+        off: Assets.get("icon-unmute"),
+      },
+      initialState: options.muted ? "on" : "off",
+      width: config.mute.width,
+      height: config.mute.height,
+      onClick: () => {
+        this._onToggleMute();
+      },
+    });
+
+    this.addChild(this._background, this._contentContainer, this._muteButton);
 
     this._contentContainer.addChild(
       this._title,
@@ -150,6 +178,8 @@ export abstract class ResultOverlay
     this._contentContainer.alpha = 1;
     this._collections.alpha = 0;
     this._continueButton.alpha = 0;
+    this._muteButton.alpha = 1;
+    this._muteButton.visible = true;
 
     this._character.reset();
     this._character.scale.set(config.character.enterScale);
@@ -195,6 +225,11 @@ export abstract class ResultOverlay
       centerX / scale,
       centerY / scale + layout.buttonY,
     );
+
+    this._muteButton.position.set(
+      width - config.mute.padding - this._muteButton.width / 2,
+      config.mute.padding + this._muteButton.height / 2,
+    );
   }
 
   public async animateIn(): Promise<void> {
@@ -206,6 +241,7 @@ export abstract class ResultOverlay
     this._title.alpha = 0;
     this._character.alpha = 0;
     this._contentContainer.alpha = 1;
+    this._muteButton.alpha = 1;
 
     await gsap.to(this._background, {
       revealRatio: 0,
@@ -256,11 +292,19 @@ export abstract class ResultOverlay
 
     this.killTweens();
 
-    await gsap.to(this._contentContainer, {
-      alpha: 0,
-      duration: animation.fadeDuration,
-      ease: animation.ease,
-    });
+    await Promise.all([
+      gsap.to(this._contentContainer, {
+        alpha: 0,
+        duration: animation.fadeDuration,
+        ease: animation.ease,
+      }),
+
+      gsap.to(this._muteButton, {
+        alpha: 0,
+        duration: animation.fadeDuration,
+        ease: animation.ease,
+      }),
+    ]);
 
     this._character.reset();
 
@@ -269,6 +313,8 @@ export abstract class ResultOverlay
       duration: animation.revealDuration,
       ease: animation.ease,
     });
+
+    this._muteButton.visible = false;
   }
 
   public killTweens(): void {
@@ -280,6 +326,8 @@ export abstract class ResultOverlay
       this._collections,
       this._distanceStat,
       this._continueButton,
+      this._muteButton,
+      this._background,
     ]);
   }
 

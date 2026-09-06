@@ -38,4 +38,12 @@ export class TextButton extends AnimatedButton {
     // Centre the button around its position.
     this.pivot.set(width / 2, height / 2);
   }
+
+  public set text(text: string) {
+    this.label.text = text;
+  }
+
+  public get text(): string {
+    return this.label.text;
+  }
 }
