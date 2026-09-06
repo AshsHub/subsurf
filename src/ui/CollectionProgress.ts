@@ -274,27 +274,51 @@ export class CollectionProgress extends Container {
     this._updateProgress(this._progressTween.value);
   }
 
-  public async animateTo(targetValue: number, delay = 0.2): Promise<void> {
+  public animateTo(targetValue: number, duration = 1): Promise<void> {
     const clampedTarget = this._clampValue(targetValue);
+    const startValue = this._value;
 
-    while (this._value < clampedTarget) {
-      await this.animateIncrement(delay);
-    }
-  }
-
-  public async animateIncrement(delay = 0.2): Promise<void> {
-    if (this._value >= this._target) {
-      return;
+    if (startValue === clampedTarget) {
+      return Promise.resolve();
     }
 
-    this._value += 1;
-    this._valueText.text = this._formatValue();
+    gsap.killTweensOf(this._progressTween);
 
-    await this._animateTo(this._value);
+    return new Promise((resolve) => {
+      const state = {
+        value: startValue,
+      };
 
-    if (delay > 0) {
-      await gsap.delayedCall(delay, () => {});
-    }
+      gsap.to(state, {
+        value: clampedTarget,
+        duration,
+        ease: "none",
+
+        onUpdate: () => {
+          const nextValue = Math.round(state.value);
+
+          if (nextValue !== this._value) {
+            this._value = nextValue;
+            this._valueText.text = this._formatValue();
+
+            this._pulse();
+          }
+
+          this._progressTween.value = state.value;
+          this._update();
+        },
+
+        onComplete: () => {
+          this._value = clampedTarget;
+          this._valueText.text = this._formatValue();
+
+          this._progressTween.value = clampedTarget;
+          this._update();
+
+          resolve();
+        },
+      });
+    });
   }
 
   private _animateTo(targetValue: number): Promise<void> {

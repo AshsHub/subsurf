@@ -58,6 +58,7 @@ export abstract class Obstacle extends DynamicEntity {
     laserMaterial.baseColor = Color.fromBytes(255, 45, 80, 140);
     laserMaterial.baseColorTexture = this._laserTexture;
     laserMaterial.emissive = Color.fromBytes(255, 60, 90);
+    laserMaterial.emissiveTexture = this._laserTexture;
     laserMaterial.metallic = 0;
     laserMaterial.roughness = 0.05;
     laserMaterial.alphaMode = StandardMaterialAlphaMode.blend;

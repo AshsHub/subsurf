@@ -52,7 +52,7 @@ export abstract class ResultOverlay
     collections: {
       target: 10,
       displayScale: 1.5,
-      incrementDelay: 0.025,
+      animationDuration: 1.5,
     },
 
     button: {
@@ -127,12 +127,10 @@ export abstract class ResultOverlay
     this.eventMode = "static";
   }
 
-  // TODO: fix typing
   public onEnter(_app: Application, meta?: ResultOverlayMeta): void {
     const config = ResultOverlay.CONFIG;
 
     this._collectionValue = meta?.collections ?? 0;
-
     const collectionTarget = meta?.collectionTarget;
 
     this._distanceTraveled = meta?.distance ?? 0;
@@ -229,7 +227,7 @@ export abstract class ResultOverlay
 
     await this._collections.animateTo(
       this._collectionValue,
-      config.collections.incrementDelay,
+      config.collections.animationDuration,
     );
 
     await this._playResultAnimation();
