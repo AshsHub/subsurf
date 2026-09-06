@@ -17,6 +17,7 @@ import {
   OverlayId,
   OverlayManager,
   type OverlayFactory,
+  type OverlayRegistration,
 } from "../ui/overlay/OverlayManager";
 import { PauseOverlay } from "../ui/overlay/PauseOverlay";
 import { WinOverlay } from "../ui/overlay/WinOverlay";
@@ -110,78 +111,91 @@ export class GameApp {
 
     const muted = this._storage.get("muted");
 
-    const overlayFactories = new Map<OverlayId, OverlayFactory>([
+    const overlayFactories = new Map<OverlayId, OverlayRegistration>([
       [
         OverlayId.Home,
-        () =>
-          new HomeOverlay({
-            onRequestStart: () => {
-              this._gameState.start();
-            },
-            onReady: async () => {
-              await this._assetLoader.loadBundle("game");
-              await this._soundController.registerMany(
-                ...Object.values(SoundId),
-              );
-
-              this.initGame();
-            },
-            onToggleMute: () => {
-              const mute = !this._storage.get("muted");
-              this._setMute(mute);
-            },
-            muted,
-          }),
+        {
+          factory: () =>
+            new HomeOverlay({
+              onRequestStart: () => {
+                this._gameState.start();
+              },
+              onReady: async () => {
+                await this._assetLoader.loadBundle("game");
+                await this._soundController.registerMany(
+                  ...Object.values(SoundId),
+                );
+                this.initGame();
+              },
+              onToggleMute: () => {
+                const mute = !this._storage.get("muted");
+                this._setMute(mute);
+              },
+              muted,
+            }),
+        },
       ],
       [
         OverlayId.Pause,
-        () =>
-          new PauseOverlay({
-            onResume: () => {
-              this._gameState.resume();
-            },
-            onToggleMute: () => {
-              const mute = !this._storage.get("muted");
-              this._setMute(mute);
-            },
-            muted,
-          }),
+        {
+          factory: () =>
+            new PauseOverlay({
+              onResume: () => {
+                this._gameState.resume();
+              },
+              onToggleMute: () => {
+                const mute = !this._storage.get("muted");
+                this._setMute(mute);
+              },
+              muted,
+            }),
+          priority: 100,
+        },
       ],
+
       [
         OverlayId.EndWon,
-        () =>
-          new WinOverlay({
-            onContinue: () => {
-              this._gameState.reset();
-              this._gameState.start();
-            },
-            onToggleMute: () => {
-              const mute = !this._storage.get("muted");
-              this._setMute(mute);
-            },
-            onResultReveal: () => {
-              this._soundController.playSfx(SoundId.GameWin);
-            },
-            muted,
-          }),
+        {
+          factory: () =>
+            new WinOverlay({
+              onContinue: () => {
+                this._gameState.reset();
+                this._gameState.start();
+              },
+              onToggleMute: () => {
+                const mute = !this._storage.get("muted");
+                this._setMute(mute);
+              },
+              onResultReveal: () => {
+                this._soundController.playSfx(SoundId.GameWin);
+              },
+              muted,
+            }),
+          priority: 100,
+        },
       ],
       [
         OverlayId.EndLost,
-        () =>
-          new LoseOverlay({
-            onContinue: () => {
-              this._gameState.reset();
-              this._gameState.start();
-            },
-            onResultReveal: () => {
-              this._soundController.playSfx(SoundId.GameLose);
-            },
-            onToggleMute: () => {
-              const mute = !this._storage.get("muted");
-              this._setMute(mute);
-            },
-            muted,
-          }),
+        {
+          factory: () =>
+            new LoseOverlay({
+              onContinue: () => {
+                this._gameState.reset();
+                this._gameState.start();
+              },
+              onToggleMute: () => {
+                const mute = !this._storage.get("muted");
+                this._setMute(mute);
+              },
+              onResultReveal: () => {
+                this._soundController.playSfx(SoundId.GameLose);
+              },
+
+              muted,
+            }),
+
+          priority: 100,
+        },
       ],
     ]);
 

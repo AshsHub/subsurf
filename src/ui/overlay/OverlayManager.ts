@@ -3,8 +3,6 @@ import { gsap } from "gsap";
 import type { Overlay } from "./Overlay";
 import type { ResultOverlayMeta } from "./ResultOverlay";
 
-const TRANSITION_DURATION = 0.35;
-
 export enum OverlayId {
   Home,
   Pause,
@@ -19,6 +17,11 @@ export type OverlayOptions<TMeta = undefined> = {
 
 export type OverlayFactory = () => Overlay;
 
+export type OverlayRegistration = {
+  factory: OverlayFactory;
+  priority?: number;
+};
+
 interface OverlayMetaMap {
   [OverlayId.Home]: undefined;
   [OverlayId.Pause]: undefined;
@@ -27,6 +30,9 @@ interface OverlayMetaMap {
 }
 
 export class OverlayManager {
+  public static CONFIG = {
+    transitionDuration: 0.35,
+  };
   private currentOverlay: Overlay | undefined;
   private currentOverlayId: OverlayId | undefined;
 
@@ -37,7 +43,7 @@ export class OverlayManager {
   constructor(
     private _app: Application,
     private _parent: Container,
-    private _factories: Map<OverlayId, OverlayFactory>,
+    private _factories: Map<OverlayId, OverlayRegistration>,
   ) {}
 
   public get current(): OverlayId | undefined {
@@ -57,17 +63,33 @@ export class OverlayManager {
       return;
     }
 
+    const registration = id === null ? undefined : this._factories.get(id);
+
+    if (id !== null && !registration) {
+      throw new Error(`Unknown overlay: ${id}`);
+    }
+
     if (previousOverlay) {
       this._stopTransitionAnimation(previousOverlay);
 
-      if (options?.immediateTransition) {
+      const previousPriority =
+        previousOverlayId === undefined
+          ? 0
+          : this._getPriority(previousOverlayId);
+
+      const nextPriority = id === null ? 0 : (registration?.priority ?? 0);
+
+      const shouldInterrupt = nextPriority > previousPriority;
+
+      if (options?.immediateTransition || shouldInterrupt) {
         previousOverlay.alpha = 0;
+        this._removeOverlay(previousOverlay);
       } else if (previousOverlay.animateOut) {
         await previousOverlay.animateOut();
       } else {
         await gsap.to(previousOverlay, {
           alpha: 0,
-          duration: TRANSITION_DURATION,
+          duration: OverlayManager.CONFIG.transitionDuration,
           ease: "power2.inOut",
           overwrite: true,
         });
@@ -77,26 +99,22 @@ export class OverlayManager {
         return;
       }
 
-      await previousOverlay.onExit?.();
+      if (this.currentOverlay === previousOverlay) {
+        await previousOverlay.onExit?.();
 
-      if (version !== this.transitionVersion) {
-        return;
+        if (version !== this.transitionVersion) {
+          return;
+        }
+
+        this._removeOverlay(previousOverlay);
       }
-
-      this._removeOverlay(previousOverlay);
     }
 
-    if (id === null) {
+    if (id === null || !registration) {
       return;
     }
 
-    const factory = this._factories.get(id);
-
-    if (!factory) {
-      throw new Error(`Unknown overlay: ${id}`);
-    }
-
-    const overlay = factory();
+    const overlay = registration.factory();
 
     this.currentOverlay = overlay;
     this.currentOverlayId = id;
@@ -123,7 +141,7 @@ export class OverlayManager {
     } else {
       await gsap.to(overlay, {
         alpha: 1,
-        duration: TRANSITION_DURATION,
+        duration: OverlayManager.CONFIG.transitionDuration,
         ease: "power2.out",
         overwrite: true,
       });
@@ -142,10 +160,15 @@ export class OverlayManager {
     this.currentOverlayId = undefined;
   }
 
-  public onResize(width: number, height: number) {
-    this.currentOverlay?.onResize?.(width, height);
+  public onResize(width: number, height: number): void {
     this._screenWidth = width;
     this._screenHeight = height;
+
+    this.currentOverlay?.onResize?.(width, height);
+  }
+
+  private _getPriority(id: OverlayId): number {
+    return this._factories.get(id)?.priority ?? 0;
   }
 
   private _stopTransitionAnimation(overlay: Overlay): void {
