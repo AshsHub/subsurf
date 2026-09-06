@@ -54,7 +54,11 @@ export class HomeOverlay extends Container implements Overlay {
 
     this.startButton = new TextButton({
       text: "Start",
-      onClick: options.onRequestStart,
+      onClick: () => {
+        this.startButton.setEnabled(false);
+        this.startButton.text = "Starting";
+        options.onRequestStart();
+      },
       onPointerEnter: () => {
         this._logo.animation = "pop";
       },

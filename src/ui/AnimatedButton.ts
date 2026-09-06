@@ -14,12 +14,15 @@ export interface AnimatedButtonOptions {
 }
 
 export abstract class AnimatedButton extends Container {
+  private static readonly DISABLED_ALPHA = 0.5;
+
   private readonly hoverScale: number;
   private readonly pressedScale: number;
   private readonly animationDuration: number;
 
   private isHovered = false;
   private isPressed = false;
+  private _enabled = true;
 
   protected constructor(options: AnimatedButtonOptions = {}) {
     super();
@@ -32,6 +35,10 @@ export abstract class AnimatedButton extends Container {
     this.cursor = "pointer";
 
     this.on("pointerenter", (event: FederatedPointerEvent) => {
+      if (!this._enabled) {
+        return;
+      }
+
       this.isHovered = true;
 
       this.animateScale(this.hoverScale);
@@ -40,6 +47,10 @@ export abstract class AnimatedButton extends Container {
     });
 
     this.on("pointerleave", (event: FederatedPointerEvent) => {
+      if (!this._enabled) {
+        return;
+      }
+
       this.isHovered = false;
       this.isPressed = false;
 
@@ -49,6 +60,10 @@ export abstract class AnimatedButton extends Container {
     });
 
     this.on("pointerdown", (event: FederatedPointerEvent) => {
+      if (!this._enabled) {
+        return;
+      }
+
       this.isPressed = true;
 
       this.animateScale(this.pressedScale);
@@ -57,6 +72,10 @@ export abstract class AnimatedButton extends Container {
     });
 
     this.on("pointerup", (event: FederatedPointerEvent) => {
+      if (!this._enabled) {
+        return;
+      }
+
       this.isPressed = false;
 
       this.animateScale(this.isHovered ? this.hoverScale : 1);
@@ -65,17 +84,31 @@ export abstract class AnimatedButton extends Container {
     });
 
     this.on("pointerupoutside", () => {
+      if (!this._enabled) {
+        return;
+      }
+
       this.isPressed = false;
 
       this.animateScale(this.isHovered ? this.hoverScale : 1);
     });
 
     this.on("pointertap", () => {
+      if (!this._enabled) {
+        return;
+      }
+
       options.onClick?.();
     });
   }
 
-  setEnabled(enabled: boolean): this {
+  public setEnabled(enabled: boolean): this {
+    if (this._enabled === enabled) {
+      return this;
+    }
+
+    this._enabled = enabled;
+
     this.eventMode = enabled ? "static" : "none";
     this.cursor = enabled ? "pointer" : "default";
 
@@ -83,10 +116,20 @@ export abstract class AnimatedButton extends Container {
     this.isPressed = false;
 
     gsap.killTweensOf(this.scale);
-
     this.scale.set(1);
 
+    gsap.to(this, {
+      alpha: enabled ? 1 : AnimatedButton.DISABLED_ALPHA,
+      duration: 0.15,
+      ease: "power2.out",
+      overwrite: true,
+    });
+
     return this;
+  }
+
+  public get enabled(): boolean {
+    return this._enabled;
   }
 
   private animateScale(scale: number): void {

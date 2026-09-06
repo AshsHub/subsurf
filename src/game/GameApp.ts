@@ -42,6 +42,7 @@ export class GameApp {
   private readonly _gameProgress = new GameProgress();
   private readonly _gameWorld: GameWorld;
   private _gameInitialised = false;
+  private _backgroundAssetsReady: Promise<void> = Promise.resolve();
 
   constructor() {
     this._storage = new LocalStorage({
@@ -112,7 +113,8 @@ export class GameApp {
         {
           factory: () =>
             new HomeOverlay({
-              onRequestStart: () => {
+              onRequestStart: async () => {
+                await this._backgroundAssetsReady;
                 this.initGame();
                 this._gameState.start();
               },
@@ -203,7 +205,7 @@ export class GameApp {
     });
 
     this.initListeners();
-    this.loadBackgroundAssets();
+    this._backgroundAssetsReady = this.loadBackgroundAssets();
   }
 
   private async loadBackgroundAssets(): Promise<void> {
