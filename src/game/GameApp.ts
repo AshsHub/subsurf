@@ -8,6 +8,7 @@ import {
 } from "./GameState";
 
 import { KeyboardAction, KeyboardInput } from "../input/KeyboardInput";
+import { TouchInput } from "../input/TouchINput";
 import { ASSET_BUNDLES, AssetLoader } from "../loading/AssetLoader";
 import { BootFlow } from "../loading/BootFlow";
 import { GameUI } from "../ui/GameUI";
@@ -16,7 +17,6 @@ import { LoseOverlay } from "../ui/overlay/LoseOverlay";
 import {
   OverlayId,
   OverlayManager,
-  type OverlayFactory,
   type OverlayRegistration,
 } from "../ui/overlay/OverlayManager";
 import { PauseOverlay } from "../ui/overlay/PauseOverlay";
@@ -39,6 +39,7 @@ export class GameApp {
   private readonly _gameState = new GameStateManager();
   private readonly _assetLoader = new AssetLoader();
   private readonly _keyboard = new KeyboardInput();
+  private readonly _touch = new TouchInput();
   private readonly _gameProgress = new GameProgress();
   private readonly _gameWorld: GameWorld;
   private _gameInitialised = false;
@@ -53,7 +54,7 @@ export class GameApp {
 
     this._gameWorld = new GameWorld(this._soundController);
 
-    this._gameWorld.onHitObstacle.subscribe((side) => {
+    this._gameWorld.onHitObstacle.subscribe(() => {
       this._gameState.end(GameResult.Lost);
     });
 
@@ -238,7 +239,8 @@ export class GameApp {
     );
 
     this._uiContainer.addChild(this._gameUI);
-    this._keyboard.onAction(this._onKeyboardAction);
+    this._keyboard.onInput(this._onInput);
+    this._touch.onInput(this._onInput);
 
     this._handleResize();
   }
@@ -330,13 +332,12 @@ export class GameApp {
 
   public destroy(): void {
     window.removeEventListener("resize", this._handleResize);
-
     this._keyboard.destroy();
-
+    this._touch.destroy();
     this._app?.destroy(true);
   }
 
-  private _onKeyboardAction = (action: KeyboardAction): void => {
+  private _onInput = (action: KeyboardAction): void => {
     if (
       [
         KeyboardAction.MoveLeft,
@@ -347,12 +348,6 @@ export class GameApp {
       this._gameUI.hideDemo();
     }
 
-    if (action === KeyboardAction.end_win) {
-      this._gameState.end(GameResult.Won);
-    }
-    if (action === KeyboardAction.end_lose) {
-      this._gameState.end(GameResult.Lost);
-    }
     if (action === KeyboardAction.Pause) {
       if (this._gameState.state === GameState.Paused) {
         this._gameState.resume();

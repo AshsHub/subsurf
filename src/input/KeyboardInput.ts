@@ -3,8 +3,6 @@ export enum KeyboardAction {
   MoveLeft,
   MoveRight,
   Jump,
-  end_win, // remove
-  end_lose, // remove
 }
 
 export class KeyboardInput {
@@ -14,7 +12,7 @@ export class KeyboardInput {
     window.addEventListener("keydown", this._onKeyDown);
   }
 
-  public onAction(listener: (action: KeyboardAction) => void): () => void {
+  public onInput(listener: (action: KeyboardAction) => void): () => void {
     this._listeners.add(listener);
 
     return () => {
@@ -49,13 +47,6 @@ export class KeyboardInput {
       case "Escape":
       case "KeyP":
         action = KeyboardAction.Pause;
-        break;
-
-      case "KeyN":
-        action = KeyboardAction.end_lose;
-        break;
-      case "KeyM":
-        action = KeyboardAction.end_win;
         break;
     }
 
