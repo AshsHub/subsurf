@@ -5,7 +5,7 @@
       "assets": [
         {
           "alias": "Bungee-Regular",
-          "src": "/assets/fonts/Bungee-Regular.ttf"
+          "src": "fonts/Bungee-Regular.ttf"
         }
       ]
     },
@@ -14,15 +14,15 @@
       "assets": [
         {
           "alias": "menu-music",
-          "src": "/assets/home/audio/menu-music.mp3"
+          "src": "home/audio/menu-music.mp3"
         },
         {
           "alias": "icon-mute",
-          "src": "/assets/home/icon-mute.png"
+          "src": "home/icon-mute.png"
         },
         {
           "alias": "icon-unmute",
-          "src": "/assets/home/icon-unmute.png"
+          "src": "home/icon-unmute.png"
         }
       ]
     },
@@ -31,99 +31,99 @@
       "assets": [
         {
           "alias": "collect",
-          "src": "/assets/game/audio/collect.mp3"
+          "src": "game/audio/collect.mp3"
         },
         {
           "alias": "crash",
-          "src": "/assets/game/audio/crash.mp3"
+          "src": "game/audio/crash.mp3"
         },
         {
           "alias": "game-lose",
-          "src": "/assets/game/audio/game-lose.mp3"
+          "src": "game/audio/game-lose.mp3"
         },
         {
           "alias": "game-start",
-          "src": "/assets/game/audio/game-start.mp3"
+          "src": "game/audio/game-start.mp3"
         },
         {
           "alias": "game-win",
-          "src": "/assets/game/audio/game-win.mp3"
+          "src": "game/audio/game-win.mp3"
         },
         {
           "alias": "gameplay-music",
-          "src": "/assets/game/audio/gameplay-music.mp3"
+          "src": "game/audio/gameplay-music.mp3"
         },
         {
           "alias": "hit",
-          "src": "/assets/game/audio/hit.mp3"
+          "src": "game/audio/hit.mp3"
         },
         {
           "alias": "jump",
-          "src": "/assets/game/audio/jump.mp3"
+          "src": "game/audio/jump.mp3"
         },
         {
           "alias": "move",
-          "src": "/assets/game/audio/move.mp3"
+          "src": "game/audio/move.mp3"
         },
         {
           "alias": "icon-arrow-left",
-          "src": "/assets/game/icon-arrow-left.png"
+          "src": "game/icon-arrow-left.png"
         },
         {
           "alias": "icon-arrow-right",
-          "src": "/assets/game/icon-arrow-right.png"
+          "src": "game/icon-arrow-right.png"
         },
         {
           "alias": "icon-pause",
-          "src": "/assets/game/icon-pause.png"
+          "src": "game/icon-pause.png"
         },
         {
           "alias": "icon-pointer",
-          "src": "/assets/game/icon-pointer.png"
+          "src": "game/icon-pointer.png"
         },
         {
           "alias": "icon-space-bar",
-          "src": "/assets/game/icon-space-bar.png"
+          "src": "game/icon-space-bar.png"
         },
         {
           "alias": "player-body-texture",
-          "src": "/assets/game/player-body-texture.jpg"
+          "src": "game/player-body-texture.jpg"
         },
         {
           "alias": "player-cockpit-texture",
-          "src": "/assets/game/player-cockpit-texture.jpg"
+          "src": "game/player-cockpit-texture.jpg"
         },
         {
           "alias": "player-engine-texture",
-          "src": "/assets/game/player-engine-texture.jpg"
+          "src": "game/player-engine-texture.jpg"
         },
         {
           "alias": "road-texture",
-          "src": "/assets/game/road-texture.jpg"
+          "src": "game/road-texture.jpg"
         },
         {
           "alias": "back",
-          "src": "/assets/game/skybox/back.jpg"
+          "src": "game/skybox/back.jpg"
         },
         {
           "alias": "bottom",
-          "src": "/assets/game/skybox/bottom.jpg"
+          "src": "game/skybox/bottom.jpg"
         },
         {
           "alias": "front",
-          "src": "/assets/game/skybox/front.jpg"
+          "src": "game/skybox/front.jpg"
         },
         {
           "alias": "left",
-          "src": "/assets/game/skybox/left.jpg"
+          "src": "game/skybox/left.jpg"
         },
         {
           "alias": "right",
-          "src": "/assets/game/skybox/right.jpg"
+          "src": "game/skybox/right.jpg"
         },
         {
           "alias": "top",
-          "src": "/assets/game/skybox/top.jpg"
+          "src": "game/skybox/top.jpg"
         }
       ]
     }
