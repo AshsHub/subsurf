@@ -39,12 +39,8 @@ export class AssetLoader {
     if (this.initialized) {
       return;
     }
-    console.log("BASE_URL:", import.meta.env.BASE_URL);
-    console.log("manifest:", `${import.meta.env.BASE_URL}assets/manifest.json`);
-    console.log("basePath:", `${import.meta.env.BASE_URL}assets/`);
     await Assets.init({
       manifest: `${import.meta.env.BASE_URL}assets/manifest.json`,
-      basePath: `${import.meta.env.BASE_URL}assets/`,
     });
     this.initialized = true;
   }
