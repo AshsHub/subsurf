@@ -35,7 +35,7 @@ export class GameApp {
   private _storage: LocalStorage;
   private _soundController: SoundController;
 
-  private _gameUI!: GameUI;
+  private _gameUI?: GameUI;
   private _overlayManager!: OverlayManager;
 
   private readonly _gameState = new GameStateManager();
@@ -268,7 +268,7 @@ export class GameApp {
 
   private addPoint(): void {
     const collections = this._gameProgress.addCollection();
-    this._gameUI.setCollections(collections);
+    this._gameUI?.setCollections(collections);
 
     if (collections >= this._gameProgress.collectionTarget) {
       this._gameState.end(GameResult.Won);
@@ -277,7 +277,7 @@ export class GameApp {
 
   private resetGameProgress(): void {
     this._gameProgress.reset();
-    this._gameUI.reset();
+    this._gameUI?.reset();
   }
 
   private async _onGameStateChange({
@@ -306,19 +306,19 @@ export class GameApp {
           this.resetGameProgress();
         }
 
-        this._gameUI.show();
+        this._gameUI?.show();
         await this._overlayManager.goTo(null);
         break;
 
       case GameState.Paused:
         this._gameWorld.pause();
-        this._gameUI.hide();
+        this._gameUI?.hide();
         await this._overlayManager.goTo(OverlayId.Pause);
         break;
 
       case GameState.Ended:
         this._gameWorld.end();
-        this._gameUI.hide();
+        this._gameUI?.hide();
 
         await this._overlayManager.goTo(
           result === GameResult.Won ? OverlayId.EndWon : OverlayId.EndLost,
@@ -330,7 +330,7 @@ export class GameApp {
 
       case GameState.Idle:
         this._gameWorld.reset();
-        this._gameUI.hide();
+        this._gameUI?.hide();
         break;
     }
   }
@@ -350,7 +350,7 @@ export class GameApp {
         KeyboardAction.Jump,
       ].includes(action)
     ) {
-      this._gameUI.hideDemo();
+      this._gameUI?.hideDemo();
     }
 
     if (action === KeyboardAction.Pause) {
@@ -378,6 +378,6 @@ export class GameApp {
     const { width, height } = this._app.screen;
 
     this._overlayManager.onResize(width, height);
-    this._gameUI.onResize(width, height);
+    this._gameUI?.onResize(width, height);
   };
 }
