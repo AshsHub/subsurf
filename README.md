@@ -3,6 +3,9 @@
 - Skybox from: https://tools.wwwtyro.net/space-3d/index.html#animationSpeed=1&fov=88.06286028223991&nebulae=true&pointStars=true&resolution=1024&seed=3999moq13n6&stars=true&sun=true
 - Font from: https://fonts.google.com/selection
 - Road Texture from: https://www.cgbookcase.com/textures/thanks?t=ThreeLaneRoadWet01_MR_2K.zip&r=2&u=ThreeLaneRoadWet01
+- Player Body Texture: https://3dtextures.me/2021/12/11/sci-fi-metal-panel-002/
+- Player Cockpit Texture: https://3dtextures.me/2019/09/06/solar-panel-001/
+- Player Engine Texture: https://3dtextures.me/2017/12/07/alien-muscle-001/
 
 - Mute icon: https://seekicon.com/free-icon/volume-mute-outline_1
 - Unmute icon: https://seekicon.com/search?s=mute+icon

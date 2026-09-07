@@ -2,15 +2,19 @@ import { Assets, Container } from "pixi.js";
 import { CollectionProgress } from "./CollectionProgress";
 import { ControlsDemo } from "./ControlsDemo";
 import { IconButton } from "./IconButton";
-import type { Resizable } from "./UIRoot";
 
-export class GameUI extends Container implements Resizable {
+export class GameUI extends Container {
   private static readonly CONFIG = {
     pausePadding: 20,
+    progressBarScale: 1.5,
   };
   private readonly pauseButton: IconButton;
   private readonly collectionProgress: CollectionProgress;
   private readonly controlsDemo: ControlsDemo;
+
+  private readonly pauseButtonBaseWidth: number;
+  private readonly progressBarBaseWidth: number;
+
   private _demoHidden = false;
 
   constructor(onPause: () => void, targetCollections: number) {
@@ -25,14 +29,15 @@ export class GameUI extends Container implements Resizable {
       },
     });
 
+    this.pauseButtonBaseWidth = this.pauseButton.width;
+
     this.collectionProgress = new CollectionProgress({
       target: targetCollections,
-      displayScale: 1.5,
+      displayScale: GameUI.CONFIG.progressBarScale,
     });
+    this.progressBarBaseWidth = this.collectionProgress.width;
     this.controlsDemo = new ControlsDemo();
-
     this.addChild(this.collectionProgress, this.pauseButton, this.controlsDemo);
-
     this.hide();
   }
 
@@ -69,15 +74,30 @@ export class GameUI extends Container implements Resizable {
 
   public onResize(width: number, height: number): void {
     const config = GameUI.CONFIG;
-    this.pauseButton.position.set(
-      width - this.pauseButton.width / 2 - config.pausePadding,
-      this.pauseButton.height / 2 + config.pausePadding,
+    const availableWidth = width - config.pausePadding * 3;
+    const normalWidth = this.progressBarBaseWidth + this.pauseButtonBaseWidth;
+    const responsiveScale = Math.min(
+      1,
+      Math.max(0, availableWidth / normalWidth),
+    );
+
+    this.pauseButton.scale.set(responsiveScale);
+
+    this.collectionProgress.setDisplayScale(
+      config.progressBarScale * responsiveScale,
     );
 
     this.collectionProgress.position.set(
-      width / 2 - this.collectionProgress.width / 2,
+      config.pausePadding,
       config.pausePadding,
     );
+
+    const pauseWidth = this.pauseButtonBaseWidth * responsiveScale;
+    this.pauseButton.position.set(
+      width - pauseWidth / 2 - config.pausePadding,
+      pauseWidth / 2 + config.pausePadding,
+    );
+
     this.controlsDemo.onResize(width, height);
   }
 }

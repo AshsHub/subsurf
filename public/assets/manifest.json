@@ -95,31 +95,31 @@
         },
         {
           "alias": "road-texture",
-          "src": "/assets/game/road-texture.png"
+          "src": "/assets/game/road-texture.jpg"
         },
         {
           "alias": "back",
-          "src": "/assets/game/skybox/back.png"
+          "src": "/assets/game/skybox/back.jpg"
         },
         {
           "alias": "bottom",
-          "src": "/assets/game/skybox/bottom.png"
+          "src": "/assets/game/skybox/bottom.jpg"
         },
         {
           "alias": "front",
-          "src": "/assets/game/skybox/front.png"
+          "src": "/assets/game/skybox/front.jpg"
         },
         {
           "alias": "left",
-          "src": "/assets/game/skybox/left.png"
+          "src": "/assets/game/skybox/left.jpg"
         },
         {
           "alias": "right",
-          "src": "/assets/game/skybox/right.png"
+          "src": "/assets/game/skybox/right.jpg"
         },
         {
           "alias": "top",
-          "src": "/assets/game/skybox/top.png"
+          "src": "/assets/game/skybox/top.jpg"
         }
       ]
     }

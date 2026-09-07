@@ -15,7 +15,7 @@ export class ControlsDemo extends Container {
 
     scale: 1.5,
     controlPadding: 24,
-    minScale: 0.65,
+    minScale: 0.5,
 
     characterMove: 64,
     characterSpeed: 140,
@@ -78,9 +78,7 @@ export class ControlsDemo extends Container {
 
   public show(): void {
     this.visible = true;
-
     gsap.killTweensOf(this);
-
     this.alpha = 0;
 
     gsap.to(this, {
@@ -110,29 +108,22 @@ export class ControlsDemo extends Container {
 
   public onResize(width: number, height: number): void {
     const horizontalOffset = this._config.keyWidth + this._config.keyGap;
-
     const requiredWidth =
       horizontalOffset * 2 +
       this._config.keyWidth +
       this._config.controlPadding * 2;
 
     const availableWidth = width - this._config.controlPadding * 2;
-
     const responsiveScale = availableWidth / requiredWidth;
-
     const scale = Math.max(
       this._config.minScale,
       Math.min(this._config.scale, responsiveScale),
     );
 
     this._controlsContainer.scale.set(scale);
-
     this._controlsContainer.position.set(width / 2, height * 0.7);
-
     this._leftKey.position.set(-horizontalOffset, 0);
-
     this._rightKey.position.set(horizontalOffset, 0);
-
     this._spaceKey.position.set(
       0,
       this._config.keyHeight + this._config.spaceGap,
@@ -228,7 +219,6 @@ export class ControlsDemo extends Container {
     height: number,
   ): Container {
     const key = new Container();
-
     const shadow = new Graphics();
 
     shadow.beginFill(0x000000, 0.3);
@@ -255,7 +245,6 @@ export class ControlsDemo extends Container {
     icon.anchor.set(0.5);
     icon.position.set(width / 2, height / 2);
 
-    // Keep the icon inside the key while preserving its aspect ratio.
     const maxWidth = width - this._config.iconPadding * 2;
     const maxHeight = height - this._config.iconPadding * 2;
 
@@ -265,9 +254,7 @@ export class ControlsDemo extends Container {
     );
 
     icon.scale.set(scale);
-
     key.addChild(shadow, body, icon);
-
     key.pivot.set(width / 2, height / 2);
 
     return key;
