@@ -40,7 +40,7 @@ export class AssetLoader {
       return;
     }
     await Assets.init({
-      manifest: "/assets/manifest.json",
+      manifest: `${import.meta.env.BASE_URL}assets/manifest.json`,
     });
     this.initialized = true;
   }
