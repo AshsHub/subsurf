@@ -26,7 +26,7 @@ async function main() {
 
     const assets = files.map((file) => {
       const relativePath = path.relative(ASSETS_DIR, file);
-      const urlPath = `./${relativePath.replaceAll(path.sep, "/")}`;
+      const urlPath = `./assets/${relativePath.replaceAll(path.sep, "/")}`;
 
       const filename = path.basename(file);
       const alias = path.basename(filename, path.extname(filename));
