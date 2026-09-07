@@ -20,7 +20,6 @@ export type CollisionHandler = (collision: CollisionResult) => void;
 export class CollisionManager {
   private readonly _colliders = new Set<Collider>();
   private readonly _onCollision?: CollisionHandler;
-  private readonly _colliderBuffer: Collider[] = [];
   private _playerCollider?: Collider;
 
   constructor(onCollision?: CollisionHandler) {

@@ -39,7 +39,6 @@ export class GameWorld extends Container3D {
 
   private readonly _collisionDebug: CollisionDebugRenderer;
 
-  private _track!: Track;
   private _player!: Player;
   private _camera!: GameplayCamera;
 
@@ -73,7 +72,7 @@ export class GameWorld extends Container3D {
   public async init(): Promise<void> {
     this._entityManager.init(this, this._collisionManager);
 
-    this._track = this._entityManager.add(Track.create());
+    this._entityManager.add(Track.create());
     this._player = this._entityManager.add(Player.create());
 
     this._camera = new GameplayCamera(this._player);

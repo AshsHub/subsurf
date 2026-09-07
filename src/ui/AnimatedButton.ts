@@ -20,8 +20,8 @@ export abstract class AnimatedButton extends Container {
   private readonly pressedScale: number;
   private readonly animationDuration: number;
 
-  private isHovered = false;
-  private isPressed = false;
+  private _isHovered = false;
+  private _isPressed = false;
   private _enabled = true;
 
   protected constructor(options: AnimatedButtonOptions = {}) {
@@ -39,7 +39,7 @@ export abstract class AnimatedButton extends Container {
         return;
       }
 
-      this.isHovered = true;
+      this._isHovered = true;
 
       this.animateScale(this.hoverScale);
 
@@ -51,8 +51,8 @@ export abstract class AnimatedButton extends Container {
         return;
       }
 
-      this.isHovered = false;
-      this.isPressed = false;
+      this._isHovered = false;
+      this._isPressed = false;
 
       this.animateScale(1);
 
@@ -64,7 +64,7 @@ export abstract class AnimatedButton extends Container {
         return;
       }
 
-      this.isPressed = true;
+      this._isPressed = true;
 
       this.animateScale(this.pressedScale);
 
@@ -76,9 +76,9 @@ export abstract class AnimatedButton extends Container {
         return;
       }
 
-      this.isPressed = false;
+      this._isPressed = false;
 
-      this.animateScale(this.isHovered ? this.hoverScale : 1);
+      this.animateScale(this._isHovered ? this.hoverScale : 1);
 
       options.onPointerUp?.(event);
     });
@@ -88,9 +88,9 @@ export abstract class AnimatedButton extends Container {
         return;
       }
 
-      this.isPressed = false;
+      this._isPressed = false;
 
-      this.animateScale(this.isHovered ? this.hoverScale : 1);
+      this.animateScale(this._isHovered ? this.hoverScale : 1);
     });
 
     this.on("pointertap", () => {
@@ -112,8 +112,8 @@ export abstract class AnimatedButton extends Container {
     this.eventMode = enabled ? "static" : "none";
     this.cursor = enabled ? "pointer" : "default";
 
-    this.isHovered = false;
-    this.isPressed = false;
+    this._isHovered = false;
+    this._isPressed = false;
 
     gsap.killTweensOf(this.scale);
     this.scale.set(1);
@@ -130,6 +130,10 @@ export abstract class AnimatedButton extends Container {
 
   public get enabled(): boolean {
     return this._enabled;
+  }
+
+  public get isPressed(): boolean {
+    return this._isPressed;
   }
 
   private animateScale(scale: number): void {
