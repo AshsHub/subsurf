@@ -1,7 +1,8 @@
 import { Assets, Container } from "pixi.js";
 import { CollectionProgress } from "./CollectionProgress";
-import { ControlsDemo } from "./ControlsDemo";
 import { IconButton } from "./IconButton";
+import { MobileControlsDemo } from "./MobileControlsDemo";
+import { ControlsDemo } from "./ControlsDemo";
 
 export class GameUI extends Container {
   private static readonly CONFIG = {
@@ -10,14 +11,18 @@ export class GameUI extends Container {
   };
   private readonly pauseButton: IconButton;
   private readonly collectionProgress: CollectionProgress;
-  private readonly controlsDemo: ControlsDemo;
+  private readonly controlsDemo: ControlsDemo | MobileControlsDemo;
 
   private readonly pauseButtonBaseWidth: number;
   private readonly progressBarBaseWidth: number;
 
   private _demoHidden = false;
 
-  constructor(onPause: () => void, targetCollections: number) {
+  constructor(
+    isMobile = false,
+    onPause: () => void,
+    targetCollections: number,
+  ) {
     super();
 
     this.pauseButton = new IconButton({
@@ -36,7 +41,9 @@ export class GameUI extends Container {
       displayScale: GameUI.CONFIG.progressBarScale,
     });
     this.progressBarBaseWidth = this.collectionProgress.width;
-    this.controlsDemo = new ControlsDemo();
+    this.controlsDemo = isMobile
+      ? new MobileControlsDemo()
+      : new ControlsDemo();
     this.addChild(this.collectionProgress, this.pauseButton, this.controlsDemo);
     this.hide();
   }

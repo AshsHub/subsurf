@@ -13,6 +13,7 @@
 - Space Icon: https://seekicon.com/free-icon/space-bar_2
 - Left Arrow Icon: https://seekicon.com/free-icon/arrow-thin-left_2
 - Right Arrow Icon: https://seekicon.com/free-icon/arrow-thin-right_2
+- Pointer Icon: https://seekicon.com/free-icon/pointer_1
 
 ## Audio Sources
 

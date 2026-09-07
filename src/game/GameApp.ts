@@ -8,7 +8,7 @@ import {
 } from "./GameState";
 
 import { KeyboardAction, KeyboardInput } from "../input/KeyboardInput";
-import { TouchInput } from "../input/TouchINput";
+import { TouchInput } from "../input/TouchInput";
 import { ASSET_BUNDLES, AssetLoader } from "../loading/AssetLoader";
 import { BootFlow } from "../loading/BootFlow";
 import { GameUI } from "../ui/GameUI";
@@ -25,9 +25,11 @@ import { GameProgress } from "./GameProgress";
 import { MusicId, SoundController, SoundId } from "./SoundController";
 import { LocalStorage } from "./StorageController";
 import { GameWorld } from "./world/GameWorld";
+import { Device } from "../Device";
 
 export class GameApp {
   private _app: Application | undefined;
+  private _device = new Device();
   private _gameContainer = new Container();
   private _uiContainer = new Container();
   private _storage: LocalStorage;
@@ -234,6 +236,7 @@ export class GameApp {
     this.setupScene();
 
     this._gameUI = new GameUI(
+      this._device.isMobile,
       () => this._gameState.pause(),
       this._gameProgress.collectionTarget,
     );

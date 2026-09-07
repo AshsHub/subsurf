@@ -78,6 +78,10 @@
           "src": "/assets/game/icon-pause.png"
         },
         {
+          "alias": "icon-pointer",
+          "src": "/assets/game/icon-pointer.png"
+        },
+        {
           "alias": "icon-space-bar",
           "src": "/assets/game/icon-space-bar.png"
         },

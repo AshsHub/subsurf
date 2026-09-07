@@ -88,7 +88,10 @@ export class ControlsDemo extends Container {
       ease: "power4.out",
     });
 
-    this._timeline.restart();
+    gsap.delayedCall(1, () => {
+      this._character.reset();
+      this._timeline.restart();
+    });
   }
 
   public hide(): void {
@@ -163,7 +166,6 @@ export class ControlsDemo extends Container {
 
   private _buildAnimation(): void {
     this._timeline.clear();
-
     this._addKeyAnimation(this._leftKey.scale, () => {
       this._character
         .moveLeft(this._config.characterMove, this._config.characterSpeed)
