@@ -1,5 +1,5 @@
 import { Container, Graphics, Text } from "pixi.js";
-import { gsap } from "gsap";
+import { gsap } from "gsap/gsap-core";
 import type { Scene } from "./Scene";
 
 export class LoadingScene extends Container implements Scene {

@@ -1,4 +1,4 @@
-import gsap from "gsap";
+import gsap from "gsap/gsap-core";
 import { Application, Assets, Container } from "pixi.js";
 import { Logo } from "../Logo";
 import type { Overlay } from "./Overlay";

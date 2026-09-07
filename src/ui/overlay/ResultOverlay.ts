@@ -1,4 +1,4 @@
-import gsap from "gsap";
+import gsap from "gsap/gsap-core";
 import { Application, Assets, Container, Text } from "pixi.js";
 import { Character } from "../Character";
 import { CollectionProgress } from "../CollectionProgress";

@@ -1,4 +1,4 @@
-import gsap from "gsap";
+import gsap from "gsap/gsap-core";
 
 export class AnimationController {
   private readonly _animations = new Set<gsap.core.Animation>();

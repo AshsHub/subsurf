@@ -11,7 +11,7 @@ import { KeyboardAction, KeyboardInput } from "../input/KeyboardInput";
 import { TouchInput } from "../input/TouchInput";
 import { ASSET_BUNDLES, AssetLoader } from "../loading/AssetLoader";
 import { BootFlow } from "../loading/BootFlow";
-import { GameUI } from "../ui/GameUI";
+import type { GameUI } from "../ui/GameUI";
 import { HomeOverlay } from "../ui/overlay/HomeOverlay";
 import { LoseOverlay } from "../ui/overlay/LoseOverlay";
 import {
@@ -24,7 +24,7 @@ import { WinOverlay } from "../ui/overlay/WinOverlay";
 import { GameProgress } from "./GameProgress";
 import { MusicId, SoundController, SoundId } from "./SoundController";
 import { LocalStorage } from "./StorageController";
-import { GameWorld } from "./world/GameWorld";
+import type { GameWorld } from "./world/GameWorld";
 import { Device } from "../Device";
 
 export class GameApp {
@@ -43,7 +43,7 @@ export class GameApp {
   private readonly _keyboard = new KeyboardInput();
   private readonly _touch = new TouchInput();
   private readonly _gameProgress = new GameProgress();
-  private readonly _gameWorld: GameWorld;
+  private _gameWorld?: GameWorld;
   private _gameInitialised = false;
   private _backgroundAssetsReady: Promise<void> = Promise.resolve();
 
@@ -54,22 +54,13 @@ export class GameApp {
 
     this._soundController = new SoundController(this._storage);
 
-    this._gameWorld = new GameWorld(this._soundController);
-
-    this._gameWorld.onHitObstacle.subscribe(() => {
-      this._gameState.end(GameResult.Lost);
-    });
-
-    this._gameWorld.onScored.subscribe(() => {
-      this.addPoint();
-    });
-
     this._gameState.onChange((stateChange) => {
       this._onGameStateChange(stateChange);
     });
   }
 
   public async init(): Promise<void> {
+    await import("pixi3d/pixi7");
     const app = new Application({
       resizeTo: window,
       backgroundColor: 0xf9edf2,
@@ -85,8 +76,10 @@ export class GameApp {
 
       const deltaTime = Math.min(app.ticker.deltaMS / 1000, 0.05);
 
-      this._gameWorld.update(deltaTime);
-      this._gameProgress.addDistance(this._gameWorld.speed * deltaTime);
+      if (this._gameWorld) {
+        this._gameWorld.update(deltaTime);
+        this._gameProgress.addDistance(this._gameWorld.speed * deltaTime);
+      }
     });
 
     const canvas = app.view as HTMLCanvasElement;
@@ -118,7 +111,7 @@ export class GameApp {
             new HomeOverlay({
               onRequestStart: async () => {
                 await this._backgroundAssetsReady;
-                this.initGame();
+                await this.initGame();
                 this._gameState.start();
               },
               onToggleMute: () => {
@@ -228,12 +221,28 @@ export class GameApp {
     }
   }
 
-  public initGame(): void {
+  public async initGame(): Promise<void> {
     if (this._gameInitialised) {
       return;
     }
+
+    const { GameWorld } = await import("./world/GameWorld");
+
+    this._gameWorld = new GameWorld(this._soundController);
+    await this._gameWorld.init();
+    this._gameContainer.addChild(this._gameWorld);
+
+    this._gameWorld.onHitObstacle.subscribe(() => {
+      this._gameState.end(GameResult.Lost);
+    });
+
+    this._gameWorld.onScored.subscribe(() => {
+      this.addPoint();
+    });
+
     this._gameInitialised = true;
-    this.setupScene();
+
+    const { GameUI } = await import("../ui/GameUI");
 
     this._gameUI = new GameUI(
       this._device.isMobile,
@@ -257,15 +266,6 @@ export class GameApp {
     window.addEventListener("resize", this._handleResize);
   }
 
-  private setupScene(): void {
-    if (!this._app) {
-      throw new Error("GameApp has not been initialised");
-    }
-
-    this._gameWorld.init();
-    this._gameContainer.addChild(this._gameWorld);
-  }
-
   private addPoint(): void {
     const collections = this._gameProgress.addCollection();
     this._gameUI.setCollections(collections);
@@ -285,6 +285,8 @@ export class GameApp {
     to,
     result,
   }: GameStateChange): Promise<void> {
+    if (!this._gameWorld) return;
+
     if (from === GameState.Idle) {
       this._soundController.playSfx(SoundId.GameStart);
     }
@@ -365,7 +367,7 @@ export class GameApp {
       return;
     }
 
-    this._gameWorld.onKeyboardAction(action);
+    this._gameWorld?.onKeyboardAction(action);
   };
 
   private readonly _handleResize = (): void => {

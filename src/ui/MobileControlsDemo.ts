@@ -1,5 +1,5 @@
 import { Container } from "pixi.js";
-import gsap from "gsap";
+import gsap from "gsap/gsap-core";
 import { Character } from "./Character";
 import { SwipePointer } from "./SwiperPointer";
 

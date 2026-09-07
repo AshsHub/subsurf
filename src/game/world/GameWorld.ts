@@ -15,7 +15,6 @@ import {
   CollisionSide,
   type CollisionResult,
 } from "../CollisionManager";
-import { CollisionDebugRenderer } from "../debug/CollisionDebugRenderer";
 import { EntityManager } from "../EntityManager";
 import { POOL_ID } from "../EntityPool";
 import { SpawnManager, type SpawnData } from "../SpawnManager";
@@ -28,6 +27,7 @@ import { Player } from "./entity/Player";
 import { Track } from "./entity/Track";
 import { GameplayCamera } from "./CameraController";
 import { SoundId, type SoundController } from "../SoundController";
+import type { CollisionDebugRenderer } from "../debug/CollisionDebugRenderer";
 
 export class GameWorld extends Container3D {
   public onHitObstacle: Subject<void> = new Subject<void>();
@@ -37,7 +37,7 @@ export class GameWorld extends Container3D {
   private readonly _collisionManager: CollisionManager;
   private readonly _spawnManager = new SpawnManager(PATTERNS, SPAWN_CONFIG);
 
-  private readonly _collisionDebug: CollisionDebugRenderer;
+  private _collisionDebug?: CollisionDebugRenderer;
 
   private _player!: Player;
   private _camera!: GameplayCamera;
@@ -55,10 +55,6 @@ export class GameWorld extends Container3D {
     this._collisionManager = new CollisionManager((collision) => {
       this._handleCollision(collision);
     });
-    this._collisionDebug = new CollisionDebugRenderer(
-      this,
-      this._collisionManager,
-    );
 
     this._spawnManager.onSpawn.subscribe((spawnData) => {
       this._spawn(spawnData);
@@ -71,14 +67,22 @@ export class GameWorld extends Container3D {
 
   public async init(): Promise<void> {
     this._entityManager.init(this, this._collisionManager);
-
     this._entityManager.add(Track.create());
-    this._player = this._entityManager.add(Player.create());
-
-    this._camera = new GameplayCamera(this._player);
 
     await this.setupSkybox();
     this.setupLighting();
+
+    this._player = this._entityManager.add(Player.create());
+    this._camera = new GameplayCamera(this._player);
+
+    if (import.meta.env.DEV) {
+      const { CollisionDebugRenderer } =
+        await import("../debug/CollisionDebugRenderer");
+      this._collisionDebug = new CollisionDebugRenderer(
+        this,
+        this._collisionManager,
+      );
+    }
   }
 
   public start(): void {
@@ -117,7 +121,7 @@ export class GameWorld extends Container3D {
     this._entityManager.update(deltaTime, this._speed);
     this._spawnManager.update(deltaTime, this._speed);
     this._collisionManager.update();
-    this._collisionDebug.update();
+    this._collisionDebug?.update();
     this._camera.update(deltaTime);
   }
 
@@ -248,7 +252,6 @@ export class GameWorld extends Container3D {
 
   private setupLighting(): void {
     const environment = LightingEnvironment.main;
-
     const playerKey = new Light();
 
     playerKey.type = LightType.point;

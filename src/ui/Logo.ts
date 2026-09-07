@@ -1,5 +1,5 @@
 import { Container, Text, TextStyle } from "pixi.js";
-import gsap from "gsap";
+import gsap from "gsap/gsap-core";
 
 export interface LogoOptions {
   text?: string;

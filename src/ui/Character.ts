@@ -1,5 +1,5 @@
 import { Container, Graphics } from "pixi.js";
-import gsap from "gsap";
+import gsap from "gsap/gsap-core";
 
 export class Character extends Container {
   private readonly _shadow: Graphics;

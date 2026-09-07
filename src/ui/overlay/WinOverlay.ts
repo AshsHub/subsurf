@@ -1,4 +1,4 @@
-import gsap from "gsap";
+import gsap from "gsap/gsap-core";
 import { Application } from "pixi.js";
 import {
   ResultOverlay,

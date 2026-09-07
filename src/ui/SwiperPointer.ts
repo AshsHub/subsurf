@@ -1,5 +1,5 @@
 import { Assets, Container, Graphics, Sprite } from "pixi.js";
-import gsap from "gsap";
+import gsap from "gsap/gsap-core";
 
 export class SwipePointer extends Container {
   private readonly _config = {
